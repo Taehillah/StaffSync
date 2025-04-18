@@ -30,4 +30,27 @@ body {
     padding: 2rem;
   }
   
-  /* Rest of your existing CSS can remain the same */
+  .login-hero {
+    color: white;
+  }
+  
+  .login-hero a {
+    color: rgba(0, 190, 255, 0.8);
+    transition: color 0.2s ease;
+  }
+  
+  .login-hero a:hover {
+    color: rgba(0, 190, 255, 1);
+    text-decoration: none;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 576px) {
+    .login-hero header h1 {
+      font-size: 1.5rem;
+    }
+    
+    .login-hero footer {
+      font-size: 0.8rem;
+    }
+  }
