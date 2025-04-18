@@ -76,3 +76,20 @@ body {
       padding: 1.5rem;
     }
   }
+
+  /* Logo styles */
+.header-logo {
+    height: 40px;
+    transition: all 0.3s ease;
+  }
+  
+  .auth-logo {
+    height: 60px;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  }
+  
+  /* For dark backgrounds, if your logo is dark */
+  .logo-invert {
+    filter: brightness(0) invert(1);
+  }

@@ -10,6 +10,7 @@ import {
 } from 'react-bootstrap';
 import { FaLock, FaEnvelope, FaSignInAlt } from 'react-icons/fa';
 import { useAuth } from '../../stores/authStore';
+import logo from '../../assets/images/Logo2.png';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -36,13 +37,23 @@ const LoginForm = () => {
 
   return (
     <div className="login-container">
-      {/* Simple Header (Optional) */}
-      <header className="py-3 px-4 w-100" style={{ 
+      
+       {/*Header with Logo */}
+       <header className="py-3 px-4 w-100 d-flex align-items-center" style={{ 
         background: 'rgba(0, 0, 0, 0.2)',
         position: 'fixed',
         top: 0,
         zIndex: 1000
       }}>
+        <img 
+          src={logo} 
+          alt="StaffSync Logo" 
+          style={{ 
+            height: '40px', 
+            marginRight: '10px',
+            filter: 'brightness(0) invert(1)' // Makes white logo if needed
+          }} 
+        />
         <h1 className="text-white m-0">StaffSync</h1>
       </header>
 
