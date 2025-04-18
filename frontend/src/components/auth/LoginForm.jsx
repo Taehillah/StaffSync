@@ -11,6 +11,7 @@ import {
 import { FaLock, FaEnvelope, FaSignInAlt } from 'react-icons/fa';
 import { useAuth } from '../../stores/authStore';
 import logo from '../../assets/images/Logo2.png';
+import logo2 from '../../assets/images/saafGold.png';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -36,6 +37,7 @@ const LoginForm = () => {
   };
 
   return (
+    
     <div className="login-container">
       
        {/*Header with Logo */}
@@ -60,7 +62,15 @@ const LoginForm = () => {
       {/* Main Content Centered */}
       <div className="auth-card">
         <div className="text-center mb-4">
-          <FaLock size={40} className="text-white mb-3" />
+        <img 
+        src={logo2} 
+        alt="StaffSync Logo" 
+        style={{ 
+          height: '60px',
+          marginBottom: '1rem',
+          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+        }} 
+      />
           <h2 className="text-white">Welcome Back</h2>
           <p className="text-white-50">Please enter your credentials to login</p>
         </div>

@@ -93,3 +93,11 @@ body {
   .logo-invert {
     filter: brightness(0) invert(1);
   }
+  @media (max-width: 576px) {
+  .navbar-logo {
+    height: 30px;
+  }
+  .auth-card-logo {
+    height: 50px;
+  }
+}
