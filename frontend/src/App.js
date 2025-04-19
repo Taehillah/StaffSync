@@ -1,17 +1,24 @@
-import { BrowserRouter as Router } from 'react-router-dom';
-import AppRoutes from './routes/AppRoutes';
-import MainLayout from './components/layout/MainLayout';
-import { AuthProvider } from './stores/authStore';
+// src/App.js
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import AdminRoute from './routes/AdminRoute';
+import AuditLogViewer from './components/admin/AuditLogViewer';
+import LoginForm from './components/auth/LoginForm'; // Make sure this exists
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <MainLayout>
-          <AppRoutes />
-        </MainLayout>
-      </Router>
-    </AuthProvider>
+    <Router>
+      <Routes>
+        <Route path="/" element={<LoginForm />} />
+        <Route 
+          path="/admin/audit-logs" 
+          element={
+            <AdminRoute requiredTier={3}>
+              <AuditLogViewer />
+            </AdminRoute>
+          } 
+        />
+      </Routes>
+    </Router>
   );
 }
 
