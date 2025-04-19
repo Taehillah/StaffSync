@@ -89,7 +89,7 @@ const LoginForm = () => {
             />
             <div className="text-white-50 small mt-1">
               <FaEnvelope className="me-1" />
-              Enter your registered email
+              Enter your registered ICENET email
             </div>
           </FloatingLabel>
 
@@ -100,12 +100,12 @@ const LoginForm = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={12}
               className="bg-transparent text-white"
             />
             <div className="text-white-50 small mt-1">
               <FaLock className="me-1" />
-              At least 6 characters
+              At least 12 characters
             </div>
           </FloatingLabel>
 

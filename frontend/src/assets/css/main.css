@@ -101,3 +101,31 @@ body {
     height: 50px;
   }
 }
+
+/* Wider register form card */
+.auth-card-wide {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    width: 100%;
+    max-width: 1200px;
+    padding: 2.5rem 3rem;
+    color: white;
+  }
+  
+  /* Adjust padding for smaller screens */
+  @media (max-width: 1200px) {
+    .auth-card-wide {
+      padding: 2rem;
+      max-width: 95%;
+    }
+  }
+  
+  /* Ensure content doesn't hide behind fixed header/footer */
+  .register-container {
+    padding-top: 80px;
+    padding-bottom: 80px;
+  }
