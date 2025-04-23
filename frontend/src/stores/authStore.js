@@ -17,7 +17,11 @@ export function AuthProvider({ children }) {
           setIsAuthenticated(true);
           resolve();
         } else {
-          reject(new Error('Invalid credentials'));
+         reject(new Error('Invalid credentials'));
+
+        // setIsAuthenticated(true); // Hloni remove after building dashboard
+      //   resolve();// Hloni remove after building dashboard
+
         }
       }, 1000);
     });
