@@ -4,9 +4,19 @@ body {
     min-height: 100vh;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: 
-      linear-gradient(rgba(10, 25, 47, 0.85), rgba(23, 42, 69, 0.9)),
-      url('https://images.unsplash.com/photo-1497366754035-f200968a6e72?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
+      linear-gradient( rgba(53, 53, 54, 0.3) 70%),
+      url('/Users/taehillah/StaffSync/frontend/src/assets/images/bk.jpg') no-repeat center center fixed;
+      /*Photo by <a href="https://unsplash.com/@pawel_czerwinski?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Pawel Czerwinski</a> on <a href="https://unsplash.com/photos/a-close-up-of-a-wall-with-a-clock-on-it-f5ITyZ8pi5I?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a>
+      Photo by <a href="https://unsplash.com/@nightcoder?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Yuriy Kovalev</a> on <a href="https://unsplash.com/photos/mountain-covering-with-clouds-nN1HSDtKdlw?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a>
+      Photo by <a href="https://unsplash.com/@subtlecinematics?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Subtle Cinematics</a> on <a href="https://unsplash.com/photos/body-of-water-near-mountain-under-cloudy-sky-during-daytime-KEI-VNDi0_g?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a>
+      Photo by <a href="https://unsplash.com/@nasa?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">NASA</a> on <a href="https://unsplash.com/photos/photo-of-outer-space-Q1p7bh3SHj8?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a>
+      
+      
+backdrop-filter: blur(5px);
+
+      */
     background-size: cover;
+    
     color: white;
   }
   
@@ -89,7 +99,7 @@ body {
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
   }
   
-  /* For dark backgrounds, if your logo is dark */
+  /* For dark backgrounds, if my logo is dark */
   .logo-invert {
     filter: brightness(0) invert(1);
   }
