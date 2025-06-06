@@ -37,7 +37,7 @@ const ForgotPassword = () => {
   };
 
   const validateICENETEmail = (email) => {
-    return email.endsWith('@icenet.gov.za') || email.endsWith('@saaf.gov.za');
+    return email.endsWith('@dod.gov.za') || email.endsWith('@saaf.gov.za');
   };
 
   const handleSendOTP = async (e) => {
