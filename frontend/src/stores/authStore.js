@@ -13,7 +13,7 @@ export function AuthProvider({ children }) {
     // Replace with actual API call
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        if (email === 'demo@example.com' && password === 'password') {
+        if  (process.env.NODE_ENV === 'development' || /*remove the Or and everything before it leaving if*/email === 'demo@example.com' && password === 'password') {
           setIsAuthenticated(true);
           resolve();
         } else {

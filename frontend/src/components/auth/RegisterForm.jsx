@@ -12,7 +12,7 @@ import {
   InputGroup
 } from 'react-bootstrap';
 import { FaUser, FaIdCard, FaPhone, FaEnvelope, FaBriefcase, FaBuilding, FaClipboardList, FaSignInAlt } from 'react-icons/fa';
-import { useAuth } from '../../stores/authStore';
+import { useAuth } from '../../stores/authStore.js';
 import logo from '../../assets/images/Logo2.png';
 import logo2 from '../../assets/images/saafGold.png';
 import { 
