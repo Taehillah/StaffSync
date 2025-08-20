@@ -1,14 +1,17 @@
 /* Replace the body background with a hero image */
 body {
-    margin: 0;
-    min-height: 100vh;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: 
-      linear-gradient(rgba(10, 25, 47, 0.85), rgba(23, 42, 69, 0.9)),
-      url('https://images.unsplash.com/photo-1497366754035-f200968a6e72?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
-    background-size: cover;
-    color: white;
-  }
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: white;
+ /* Ensure no background color interferes */
+}
+
+/* Add this to ensure content appears above DarkVeil */
+.app-container {
+  position: relative;
+  z-index: 1;
+}
   
   /* Make the container full height */
   .login-container {
@@ -89,7 +92,7 @@ body {
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
   }
   
-  /* For dark backgrounds, if your logo is dark */
+  /* For dark backgrounds, if my logo is dark */
   .logo-invert {
     filter: brightness(0) invert(1);
   }
@@ -124,8 +127,48 @@ body {
     }
   }
   
-  /* Ensure content doesn't hide behind fixed header/footer */
+  /* I must ensure content doesn't hide behind fixed header/footer */
   .register-container {
     padding-top: 80px;
     padding-bottom: 80px;
   }
+
+  .loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: white;
+    font-size: 1.5rem;
+  }
+
+  /* Quick Actions Panel specific styles */
+.quick-actions-panel {
+  padding: 15px;
+}
+
+.filter-group {
+  margin: 10px 0;
+}
+
+.filter-title {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 8px;
+}
+
+.export-btn {
+  margin-top: 10px;
+}
+
+/* Search input styles */
+.search-input {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.search-input:focus {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}

@@ -37,7 +37,7 @@ const LoginForm = () => {
   };
 
   return (
-    
+  <div className="position-relative z-index-2">
     <div className="login-container">
       
        {/*Header with Logo */}
@@ -60,7 +60,7 @@ const LoginForm = () => {
       </header>
 
       {/* Main Content Centered */}
-      <div className="auth-card">
+      <div className="auth-card ">
         <div className="text-center mb-4">
         <img 
         src={logo2} 
@@ -149,6 +149,7 @@ const LoginForm = () => {
       }}>
         © {new Date().getFullYear()} StaffSync. All rights reserved.
       </footer>
+    </div>
     </div>
   );
 };

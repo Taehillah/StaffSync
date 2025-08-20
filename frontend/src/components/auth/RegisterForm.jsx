@@ -8,16 +8,21 @@ import {
   FloatingLabel,
   Row,
   Col,
-  Container
+  Container,
+  InputGroup
 } from 'react-bootstrap';
 import { FaUser, FaIdCard, FaPhone, FaEnvelope, FaBriefcase, FaBuilding, FaClipboardList, FaSignInAlt } from 'react-icons/fa';
-import { useAuth } from '../../stores/authStore';
+import { useAuth } from '../../stores/authStore.js';
 import logo from '../../assets/images/Logo2.png';
 import logo2 from '../../assets/images/saafGold.png';
+import { 
+  validateForceNumber, 
+  musteringCodes 
+} from '../../utils/authPageValidations.js';
 
 const RegisterForm = () => {
   const [formData, setFormData] = useState({
-    employeeNumber: '',
+    forceNumber: '',
     rank: '',
     firstName: '',
     surname: '',
@@ -35,6 +40,7 @@ const RegisterForm = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { register } = useAuth();
+  const isValid = validateForceNumber(formData.forceNumber);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -105,21 +111,27 @@ const RegisterForm = () => {
             <Row className="g-3">
               {/* Column 1 */}
               <Col lg={4}>
-                <FloatingLabel controlId="employeeNumber" label="Employee Number">
-                  <Form.Control
-                    type="text"
-                    name="employeeNumber"
-                    placeholder="Employee Number"
-                    value={formData.employeeNumber}
-                    onChange={handleChange}
-                    required
-                    className="bg-transparent text-white"
-                  />
-                  <div className="text-white-50 small mt-1">
-                    <FaIdCard className="me-1" />
-                    Official employee number
-                  </div>
-                </FloatingLabel>
+              <FloatingLabel controlId="forceNumber" label="Force Number" className="mb-3">
+  <Form.Control
+    type="text"
+    name="forceNumber"
+    placeholder="12345678MC"
+    value={formData.forceNumber}
+    onChange={(e) => {
+      const value = e.target.value.toUpperCase();
+      // Auto-format: 8 digits + auto-capitalize suffix
+      if (/^\d{0,8}[A-Z]{0,2}$/.test(value)) {
+        setFormData({...formData, forceNumber: value});
+      }
+    }}
+    className="bg-transparent text-white"
+    required
+  />
+  <div className="text-white-50 small mt-1">
+    <FaIdCard className="me-1" />
+    8 digits + suffix (MC, MI, PE, or PV)
+  </div>
+</FloatingLabel>
 
                 <FloatingLabel controlId="rank" label="Rank" className="mt-3">
                   <Form.Control

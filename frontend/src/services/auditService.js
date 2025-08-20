@@ -1,8 +1,4 @@
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL
-});
+import api from './api';
 
 export const logAction = async (action, payload) => {
   return api.post('/audit-logs', {
