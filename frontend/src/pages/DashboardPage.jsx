@@ -1,487 +1,310 @@
-import React, { useState, useMemo } from 'react';
-import { 
-  Button, 
-  Image,
-  Form,
-  Table,
-  InputGroup,
-  FormControl,
-  Badge
-} from 'react-bootstrap';
-import { 
-  FaSignOutAlt, 
-  FaBell, 
-  FaUserCircle,
-  FaClipboardList,
-  FaUsers,
-  FaMapMarkedAlt,
-  FaTasks,
-  FaBolt,
-  FaSearch,
-  FaFilter,
-  FaFileExport,
-  FaServer
-} from 'react-icons/fa';
-import { 
-  mockMembers,
-  mockMusterings,
-  mockUnits,
-  mockBases,
-  mockCombatReadiness
-} from '../data/mockData';
-import defaultProfile from '../assets/images/default-profile.png';
-import { GiRank3, GiCompass, GiSwordWound } from 'react-icons/gi';
-import { useAuth } from '../stores/authStore';
-import '../assets/css/Dashboard.css';
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Button, Image, Form, Table, InputGroup, FormControl, Badge, Modal
+} from "react-bootstrap";
+import {
+  FaSignOutAlt, FaBell, FaUserCircle, FaClipboardList, FaUsers, FaMapMarkedAlt,
+  FaTasks, FaBolt, FaSearch, FaFilter, FaFileExport, FaServer
+} from "react-icons/fa";
+import { GiRank3, GiCompass, GiSwordWound } from "react-icons/gi";
+import defaultProfile from "../assets/images/default-profile.png";
+import { useAuth } from "../stores/authStore";
+import { fetchPersonnel, exportPersonnelToCSV } from "../services/dataService";
+import "../assets/css/Dashboard.css";
+import saafGold from "../assets/images/saafGold.png";
 
-// Helper functions
-const getTierName = (tier) => {
-  const tiers = {
-    1: 'TIER 1 SYS_ADMIN',
-    2: 'TIER 2 COMMANDER',
-    3: 'TIER 3 DIRECTORATE',
-    4: 'TIER 4 LANA'
-  };
-  return tiers[tier] || 'USER';
-};
 
-const getTierBadgeColor = (tier) => {
-  const colors = {
-    1: 'danger',
-    2: 'warning',
-    3: 'primary',
-    4: 'info'
-  };
-  return colors[tier] || 'dark';
-};
+// helpers you already had
+const getTierName = (tier) => ({1:"TIER 1 SYS_ADMIN",2:"TIER 2 COMMANDER",3:"TIER 3 DIRECTORATE",4:"TIER 4 LANA"}[tier] || "USER");
+const getTierBadgeColor = (tier) => ({1:"danger",2:"warning",3:"primary",4:"info"}[tier] || "dark");
 
-// Component Definitions
-const RecentActivities = () => (
-  <div className="glass-card">
-    <h4><FaClipboardList className="me-2" />Recent Activities</h4>
-    <p className="text-muted">No recent activities</p>
-  </div>
-);
-
-const QuickActionsPanel = ({ onFilterChange }) => {
+function QuickActionsPanel({ onFilterChange, onExport, canExport }) {
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState({
-    mustering: [],
-    rank: [],
-    readiness: []
-  });
+  const [selectedFilters, setSelectedFilters] = useState({ mustering: [], rank: [], readiness: [] });
 
   const filterOptions = {
-    mustering: ['P', 'C2', 'SS'],
-    rank: ['General', 'Major', 'Captain', 'Corporal'],
-    readiness: ['Ready', 'Not Ready', 'Pending']
+    mustering: ["P", "C2", "SS"],
+    rank: ["General", "Major", "Captain", "Corporal"],
+    readiness: ["Ready", "Not Ready", "Pending"],
   };
 
-  const handleFilterToggle = (type, value) => {
-    setSelectedFilters(prev => ({
+  const toggle = (type, value) => {
+    setSelectedFilters((prev) => ({
       ...prev,
-      [type]: prev[type].includes(value) 
-        ? prev[type].filter(item => item !== value)
-        : [...prev[type], value]
+      [type]: prev[type].includes(value)
+        ? prev[type].filter((v) => v !== value)
+        : [...prev[type], value],
     }));
   };
 
-  const applyFilters = () => {
-    onFilterChange(selectedFilters);
-    setShowFilters(false);
-  };
-
-  const resetFilters = () => {
-    const emptyFilters = {
-      mustering: [],
-      rank: [],
-      readiness: []
-    };
-    setSelectedFilters(emptyFilters);
-    onFilterChange(emptyFilters);
+  const reset = () => {
+    const empty = { mustering: [], rank: [], readiness: [] };
+    setSelectedFilters(empty);
+    onFilterChange(empty);
   };
 
   return (
     <div className="glass-card quick-actions-panel">
       <h4><FaBolt className="me-2" />Quick Actions</h4>
-      
+
       <div className="d-grid gap-2 mb-3">
-        <Button 
-          variant="outline-light" 
-          size="sm"
-          onClick={() => setShowFilters(!showFilters)}
-        >
-          <FaFilter className="me-1" /> {showFilters ? 'Hide Filters' : 'Show Filters'}
+        <Button variant="outline-light" size="sm" onClick={() => setShowFilters((s) => !s)}>
+          <FaFilter className="me-1" /> {showFilters ? "Hide Filters" : "Show Filters"}
         </Button>
-        <Button variant="outline-light" size="sm">
+        <Button variant="outline-light" size="sm" onClick={onExport} disabled={!canExport}>
           <FaFileExport className="me-1" /> Export
         </Button>
       </div>
 
       {showFilters && (
         <div className="filter-section">
-          {Object.entries(filterOptions).map(([filterType, options]) => (
-            <div key={filterType} className="filter-group">
-              <div className="filter-title">
-                {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
-              </div>
-              <div className="filter-options">
-                {options.map(option => (
+          {Object.entries(filterOptions).map(([type, options]) => (
+            <div key={type} className="filter-group mb-2">
+              <div className="filter-title">{type[0].toUpperCase() + type.slice(1)}</div>
+              <div className="filter-options d-flex gap-3 flex-wrap">
+                {options.map((opt) => (
                   <Form.Check
-                    key={option}
+                    key={opt}
                     type="checkbox"
-                    id={`${filterType}-${option}`}
-                    label={option}
-                    checked={selectedFilters[filterType].includes(option)}
-                    onChange={() => handleFilterToggle(filterType, option)}
+                    id={`${type}-${opt}`}
+                    label={opt}
+                    checked={selectedFilters[type].includes(opt)}
+                    onChange={() => toggle(type, opt)}
                     className="filter-checkbox"
                   />
                 ))}
               </div>
             </div>
           ))}
-
           <div className="d-flex justify-content-between mt-3">
-            <Button variant="outline-secondary" size="sm" onClick={resetFilters}>
-              Reset
-            </Button>
-            <Button variant="primary" size="sm" onClick={applyFilters}>
-              Apply
-            </Button>
+            <Button variant="outline-secondary" size="sm" onClick={reset}>Reset</Button>
+            <Button variant="primary" size="sm" onClick={() => onFilterChange(selectedFilters)}>Apply</Button>
           </div>
         </div>
       )}
     </div>
   );
-};
+}
 
-const SidebarNavigation = () => (
-  <ul className="sidebar-nav glass-card">
-    <li className="nav-item">
-      <a href="#personnel" className="nav-link">
-        <GiCompass className="nav-icon" /> Personnel Overview
-      </a>
-    </li>
-    <li className="nav-item">
-      <a href="#mustering" className="nav-link">
-        <FaClipboardList className="nav-icon" /> Mustering
-      </a>
-    </li>
-    <li className="nav-item">
-      <a href="#bases" className="nav-link">
-        <FaMapMarkedAlt className="nav-icon" /> Bases
-      </a>
-    </li>
-    <li className="nav-item">
-      <a href="#units" className="nav-link">
-        <FaUsers className="nav-icon" /> Units
-      </a>
-    </li>
-    <li className="nav-item">
-      <a href="#profile" className="nav-link">
-        <FaUserCircle className="nav-icon" /> My Profile
-      </a>
-    </li>
-  </ul>
-);
-
-const PersonnelOverview = ({ activeFilters }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState({ 
-    key: 'surname', 
-    direction: 'asc' 
-  });
-  
-  const itemsPerPage = 5;
-
-  const processedData = useMemo(() => mockMembers.map(member => {
-    const mustering = mockMusterings.find(m => m.code === member.mustering_code);
-    const unit = mockUnits.find(u => u.unit_id === member.unit_id);
-    const base = mockBases.find(b => b.base_id === (unit?.base_id || null));
-    const readiness = mockCombatReadiness.find(r => r.member_id === member.member_id);
-
-    return {
-      ...member,
-      musteringName: mustering?.name || 'N/A',
-      unitName: unit?.name || 'N/A',
-      baseName: base?.name || 'N/A',
-      readinessStatus: readiness?.overall_status || 'Unknown'
-    };
-  }), []);
-
-  const filteredData = useMemo(() => {
-    let result = [...processedData];
-    
-    if (activeFilters.mustering.length > 0) {
-      result = result.filter(person => 
-        activeFilters.mustering.includes(person.mustering_code)
-      );
-    }
-    
-    if (activeFilters.rank.length > 0) {
-      result = result.filter(person => 
-        activeFilters.rank.includes(person.rank)
-      );
-    }
-    
-    if (activeFilters.readiness.length > 0) {
-      result = result.filter(person => 
-        activeFilters.readiness.includes(person.readinessStatus)
-      );
-    }
-    
-    if (searchTerm) {
-      result = result.filter(person => 
-        person.force_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        person.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        person.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        person.musteringName.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    return result;
-  }, [processedData, searchTerm, activeFilters]);
-
-  const sortedData = useMemo(() => {
-    let sortableData = [...filteredData];
-    if (sortConfig.key) {
-      sortableData.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    return sortableData;
-  }, [filteredData, sortConfig]);
-
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
-  const paginatedData = sortedData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+function SidebarNavigation() {
+  return (
+    <ul className="sidebar-nav glass-card">
+      <li className="nav-item"><a className="nav-link" href="#personnel"><GiCompass className="nav-icon" /> Personnel Overview</a></li>
+      <li className="nav-item"><a className="nav-link" href="#mustering"><FaClipboardList className="nav-icon" /> Mustering</a></li>
+      <li className="nav-item"><a className="nav-link" href="#bases"><FaMapMarkedAlt className="nav-icon" /> Bases</a></li>
+      <li className="nav-item"><a className="nav-link" href="#units"><FaUsers className="nav-icon" /> Units</a></li>
+      <li className="nav-item"><a className="nav-link" href="#profile"><FaUserCircle className="nav-icon" /> My Profile</a></li>
+    </ul>
   );
+}
 
-  const requestSort = (key) => {
-    setSortConfig({
-      key,
-      direction: sortConfig.key === key && sortConfig.direction === 'asc' 
-        ? 'desc' 
-        : 'asc'
-    });
-  };
+function PersonnelOverview({ rows, onOpen, searchTerm, setSearchTerm, activeFilters, page, pageSize, setPage }) {
+  const filtered = useMemo(() => {
+    let data = rows;
+
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      data = data.filter(p =>
+        [p.force_number, p.rank, p.surname, p.first_name, p.musteringName, p.unitName, p.baseName]
+          .join(" ")
+          .toLowerCase()
+          .includes(q)
+      );
+    }
+
+    // apply quick actions filters
+    if (activeFilters.mustering.length) {
+      data = data.filter(p => activeFilters.mustering.includes(p.musteringCode || p.musteringName?.slice(0,2)));
+    }
+    if (activeFilters.rank.length) {
+      data = data.filter(p => activeFilters.rank.includes(p.rank));
+    }
+    if (activeFilters.readiness.length) {
+      data = data.filter(p => activeFilters.readiness.includes(p.readinessStatus));
+    }
+
+    return data;
+  }, [rows, searchTerm, activeFilters]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const pageSafe = Math.min(page, totalPages);
+  const start = (pageSafe - 1) * pageSize;
+  const paginated = filtered.slice(start, start + pageSize);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(1);
+  }, [page, totalPages, setPage]);
 
   return (
-    <div className="glass-card">
+    <div id="personnel" className="glass-card">
       <h4><FaUsers className="me-2" />Personnel Overview</h4>
-      
-      <div className="mb-3">
-        <InputGroup>
-          <FormControl
-            placeholder="Search personnel..."
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-          />
-          <Button variant="outline-secondary">
-            <FaSearch />
-          </Button>
-        </InputGroup>
-      </div>
 
-      <div className="table-responsive mt-3">
-        <Table hover className="table-dark">
+      <InputGroup className="mb-3">
+        <InputGroup.Text><FaSearch /></InputGroup.Text>
+        <FormControl
+          placeholder="Search personnel..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </InputGroup>
+
+      <div className="table-responsive">
+        <Table striped hover variant="dark" className="mb-0">
           <thead>
             <tr>
-              <th onClick={() => requestSort('force_number')}>Force #</th>
-              <th onClick={() => requestSort('rank')}>Rank</th>
-              <th onClick={() => requestSort('surname')}>Name</th>
-              <th onClick={() => requestSort('musteringName')}>Mustering</th>
-              <th onClick={() => requestSort('unitName')}>Unit</th>
-              <th onClick={() => requestSort('baseName')}>Base</th>
-              <th>Readiness</th>
-              <th>Actions</th>
+              <th>Force #</th><th>Rank</th><th>Name</th><th>Mustering</th><th>Unit</th><th>Base</th><th>Readiness</th><th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {paginatedData.map((person) => (
-              <tr key={person.member_id}>
-                <td>{person.force_number}</td>
-                <td>{person.rank}</td>
-                <td>{person.surname}, {person.first_name}</td>
-                <td>{person.musteringName}</td>
-                <td>{person.unitName}</td>
-                <td>{person.baseName}</td>
+            {paginated.map((p) => (
+              <tr key={p.force_number}>
+                <td>{p.force_number}</td>
+                <td>{p.rank}</td>
+                <td>{p.surname}, {p.first_name}</td>
+                <td>{p.musteringName}</td>
+                <td>{p.unitName}</td>
+                <td>{p.baseName}</td>
                 <td>
-                  <Badge 
-                    bg={person.readinessStatus === 'Ready' ? 'success' : 'danger'}
-                    className="text-uppercase"
-                  >
-                    {person.readinessStatus}
+                  <Badge bg={p.readinessStatus === "Ready" ? "success" : "danger"} className="text-uppercase">
+                    {p.readinessStatus}
                   </Badge>
                 </td>
                 <td>
-                  <Button variant="outline-light" size="sm">
+                  <Button variant="outline-light" size="sm" onClick={() => onOpen(p)}>
                     <FaUserCircle /> View
                   </Button>
                 </td>
               </tr>
             ))}
+            {paginated.length === 0 && (
+              <tr><td colSpan={8} className="text-center text-muted">No results</td></tr>
+            )}
           </tbody>
         </Table>
       </div>
-      
+
       <div className="d-flex justify-content-between align-items-center mt-3">
-        <div className="text-muted">
-          Showing {paginatedData.length} of {filteredData.length} records
-        </div>
-        
+        <div className="text-muted">Showing {paginated.length} of {filtered.length} records</div>
         <div>
-          <Button 
-            variant="outline-light" 
-            size="sm" 
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(p => p - 1)}
-            className="me-2"
-          >
-            Previous
-          </Button>
-          
-          <span className="mx-2">
-            Page {currentPage} of {totalPages}
-          </span>
-          
-          <Button 
-            variant="outline-light" 
-            size="sm" 
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(p => p + 1)}
-          >
-            Next
-          </Button>
+          <Button variant="outline-light" size="sm" disabled={pageSafe === 1} onClick={() => setPage(p => p - 1)} className="me-2">Previous</Button>
+          <span className="mx-2">Page {pageSafe} of {totalPages}</span>
+          <Button variant="outline-light" size="sm" disabled={pageSafe === totalPages} onClick={() => setPage(p => p + 1)}>Next</Button>
         </div>
       </div>
     </div>
   );
-};
+}
 
-const NotificationsPanel = () => (
-  <div className="glass-card">
-    <h4><FaBell className="me-2" />Notifications</h4>
-    <p className="text-muted">No new notifications</p>
-  </div>
-);
+function RecentActivities() {
+  return (
+    <div className="glass-card">
+      <h4><FaClipboardList className="me-2" />Recent Activities</h4>
+      <p className="text-muted">No recent activities</p>
+    </div>
+  );
+}
 
-const SystemStatusPanel = () => (
-  <div className="glass-card">
-    <h4><FaServer className="me-2" />System Status</h4>
-    <div className="system-status">
-      <div className="status-item online">
-        <span className="status-dot"></span>
-        <span>All Systems Operational</span>
+function NotificationsPanel() {
+  const [items, setItems] = useState([
+    { id: 1, text: "System backup completed", read: false },
+    { id: 2, text: "New personnel record imported", read: true },
+  ]);
+  return (
+    <div className="glass-card">
+      <h4><FaBell className="me-2" />Notifications</h4>
+      <ul className="mb-0">
+        {items.map(n => (
+          <li key={n.id} className="d-flex justify-content-between">
+            <span className={n.read ? "text-muted" : ""}>{n.text}</span>
+            {!n.read && (
+              <Button size="sm" variant="outline-light" onClick={() => setItems(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x))}>
+                Mark read
+              </Button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function SystemStatusPanel() {
+  return (
+    <div className="glass-card">
+      <h4><FaServer className="me-2" />System Status</h4>
+      <div className="system-status">
+        <div className="status-item online">
+          <span className="status-dot"></span>
+          <span>All Systems Operational</span>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+}
 
-// Main Dashboard Component
-const Dashboard = () => {
+export default function DashboardPage() {
   const { user, logout, isLoading } = useAuth();
   const [profilePic, setProfilePic] = useState(null);
-  const [activeFilters, setActiveFilters] = useState({
-    mustering: [],
-    rank: [],
-    readiness: []
-  });
+  const [activeFilters, setActiveFilters] = useState({ mustering: [], rank: [], readiness: [] });
 
-  const handlePicUpload = (e) => {
-    const file = e.target.files[0];
-    if (file && file.size <= 2 * 1024 * 1024) {
-      const reader = new FileReader();
-      reader.onload = (event) => setProfilePic(event.target.result);
-      reader.readAsDataURL(file);
-    } else {
-      alert('Maximum file size is 2MB (JPEG/PNG only)');
-    }
-  };
+  const [rows, setRows] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
 
-  const UserProfileCard = () => (
-    <div className="user-profile-card glass-card">
-      <div className="profile-pic-container">
-        <Image 
-          src={profilePic || user?.photo || defaultProfile} 
-          roundedCircle 
-          className="profile-pic"
-        />
-        {user?.tier === 0 && (
-          <Form.Group controlId="formFile" className="mt-2">
-            <Form.Label className="upload-label">
-              <FaUserCircle className="me-1" /> Update Photo
-            </Form.Label>
-            <Form.Control 
-              type="file" 
-              accept="image/jpeg,image/png" 
-              onChange={handlePicUpload}
-              size="sm"
-            />
-          </Form.Group>
-        )}
-      </div>
-      <div className="user-info">
-        <h5><GiRank3 /> {user?.rank || 'Rank'}</h5>
-        <h4>{(user?.surname || 'User').toUpperCase()}</h4>
-        <Badge bg={getTierBadgeColor(user?.tier)} className="tier-badge">
-          {getTierName(user?.tier)}
-        </Badge>
-      </div>
-    </div>
-  );
+  const [viewItem, setViewItem] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const data = await fetchPersonnel();
+      if (alive) setRows(data);
+    })();
+    return () => { alive = false; };
+  }, []);
 
   const statsData = [
     { title: "Active Personnel", value: "3.9k", change: "+2.4%", icon: <FaUsers />, variant: "success" },
     { title: "Combat Ready", value: "87%", change: "-1.2%", icon: <GiSwordWound />, variant: "warning" },
     { title: "Active Bases", value: "13", change: "+2", icon: <FaMapMarkedAlt />, variant: "info" },
-    { title: "Active Missions", value: "24", change: "+8", icon: <FaTasks />, variant: "danger" }
+    { title: "Active Missions", value: "24", change: "+8", icon: <FaTasks />, variant: "danger" },
   ];
 
-  if (isLoading) {
-    return <div className="loading-spinner">Loading...</div>;
-  }
+  const handlePicUpload = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > 2 * 1024 * 1024) return alert("Maximum file size is 2MB (JPEG/PNG only)");
+    const reader = new FileReader();
+    reader.onload = ev => setProfilePic(ev.target.result);
+    reader.readAsDataURL(f);
+  };
+
+  if (isLoading) return <div className="loading-spinner">Loading...</div>;
 
   return (
     <div className="dashboard-container">
+      {/* header */}
       <header className="dashboard-header">
         <div className="d-flex justify-content-between align-items-center">
           <div className="d-flex align-items-center">
-            <img 
-              src="/assets/images/saafGold.png" 
-              alt="SAAF Logo"
-              className="header-logo"
-            />
+            <img src={saafGold} alt="SAAF Logo" className="header-logo" style={{ height: 64, width: "auto", maxWidth: "100%" }}/>
             <h2 className="ms-2 mb-0">STAFFSYNC DASHBOARD</h2>
           </div>
-          
           <div className="d-flex align-items-center gap-3">
-            <Button variant="danger" onClick={logout}>
-              <FaSignOutAlt className="me-1" /> Sign Out
-            </Button>
+            <Button variant="danger" onClick={logout}><FaSignOutAlt className="me-1" /> Sign Out</Button>
           </div>
         </div>
-        
+
         <div className="stats-container">
-          {statsData.map((stat, index) => (
-            <div key={index} className="stat-card">
+          {statsData.map((s, i) => (
+            <div key={i} className="stat-card">
               <div className="d-flex align-items-center">
-                <span className="stat-icon me-2">{stat.icon}</span>
+                <span className="stat-icon me-2">{s.icon}</span>
                 <div>
-                  <h6 className="card-title mb-0">{stat.title}</h6>
+                  <h6 className="card-title mb-0">{s.title}</h6>
                   <div className="d-flex align-items-baseline">
-                    <h2 className="mb-0 me-2">{stat.value}</h2>
-                    <Badge bg={stat.variant}>{stat.change}</Badge>
+                    <h2 className="mb-0 me-2">{s.value}</h2>
+                    <Badge bg={s.variant}>{s.change}</Badge>
                   </div>
                 </div>
               </div>
@@ -490,29 +313,87 @@ const Dashboard = () => {
         </div>
       </header>
 
+      {/* left column */}
       <aside className="dashboard-left">
         <div className="glass-panel">
-          <UserProfileCard />
+          <div id="profile" className="user-profile-card glass-card">
+            <div className="profile-pic-container">
+              <Image src={profilePic || user?.photo || defaultProfile} roundedCircle className="profile-pic" />
+              {/* allow upload for tier 0 if you ever use it, keep same logic as your file */}
+              <Form.Group controlId="formFile" className="mt-2">
+                <Form.Label className="upload-label"><FaUserCircle className="me-1" /> Update Photo</Form.Label>
+                <Form.Control type="file" accept="image/jpeg,image/png" onChange={handlePicUpload} size="sm" />
+              </Form.Group>
+            </div>
+            <div className="user-info">
+              <h5><GiRank3 /> {user?.rank || "Rank"}</h5>
+              <h4>{(user?.surname || "User").toUpperCase()}</h4>
+              <Badge bg={getTierBadgeColor(user?.tier)} className="tier-badge">{getTierName(user?.tier)}</Badge>
+            </div>
+          </div>
+
           <SidebarNavigation />
         </div>
       </aside>
 
+      {/* main column */}
       <main className="dashboard-main">
         <div className="glass-panel">
-          <PersonnelOverview activeFilters={activeFilters} />
+          <PersonnelOverview
+            rows={rows}
+            onOpen={setViewItem}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            activeFilters={activeFilters}
+            page={page}
+            pageSize={pageSize}
+            setPage={setPage}
+          />
           <RecentActivities />
         </div>
       </main>
 
+      {/* right column */}
       <aside className="dashboard-right">
         <div className="glass-panel">
-          <QuickActionsPanel onFilterChange={setActiveFilters} />
+          <QuickActionsPanel
+            onFilterChange={(f) => { setActiveFilters(f); setPage(1); }}
+            onExport={() => exportPersonnelToCSV(rows)}
+            canExport={rows.length > 0}
+          />
           <NotificationsPanel />
           <SystemStatusPanel />
         </div>
       </aside>
+
+      {/* View modal */}
+      <Modal show={!!viewItem} onHide={() => setViewItem(null)} centered>
+        <Modal.Header closeButton><Modal.Title>Personnel Profile</Modal.Title></Modal.Header>
+        <Modal.Body>
+          {viewItem && (
+            <>
+              <div className="d-flex align-items-center gap-3 mb-3">
+                <Image src={defaultProfile} roundedCircle width={64} height={64} />
+                <div>
+                  <div className="fw-bold">{viewItem.rank} {viewItem.surname}, {viewItem.first_name}</div>
+                  <div className="text-muted small">{viewItem.force_number}</div>
+                </div>
+              </div>
+              <Table size="sm" borderless>
+                <tbody>
+                  <tr><th>Mustering</th><td>{viewItem.musteringName}</td></tr>
+                  <tr><th>Unit</th><td>{viewItem.unitName}</td></tr>
+                  <tr><th>Base</th><td>{viewItem.baseName}</td></tr>
+                  <tr><th>Readiness</th><td>{viewItem.readinessStatus}</td></tr>
+                </tbody>
+              </Table>
+            </>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setViewItem(null)}>Close</Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
-};
-
-export default Dashboard;
+}

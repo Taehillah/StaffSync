@@ -1,15 +1,10 @@
-import { Container } from 'react-bootstrap';
-import Navbar from './Navbar';
+// src/components/layout/MainLayout.jsx
+import { Outlet } from "react-router-dom";
 
-const MainLayout = ({ children }) => {
+export default function MainLayout() {
   return (
-    <>
-      <Navbar />
-      <Container className="mt-4">
-        {children}
-      </Container>
-    </>
+    <div className="layout-shell"> 
+      <Outlet />
+    </div>
   );
-};
-
-export default MainLayout;
+}

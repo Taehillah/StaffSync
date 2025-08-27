@@ -1,174 +1,33 @@
-/* Replace the body background with a hero image */
-body {
-  margin: 0;
+html, body, #root { height: 100%; }
+body { background: #0b0f14; color: #e6e6e6; }
+
+/* Auth page layout */
+.login-container, .register-container {
   min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: white;
- /* Ensure no background color interferes */
+  padding-top: 96px;                /* space for fixed header in forms */
+  padding-bottom: 64px;
+  display: flex;
+  align-items: flex-start;          /* start below the header */
+  justify-content: center;
 }
 
-/* Add this to ensure content appears above DarkVeil */
-.app-container {
-  position: relative;
-  z-index: 1;
-}
-  
-  /* Make the container full height */
-  .login-container {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-  }
-  
-  /* Enhanced glass card effect */
-  .auth-card {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-radius: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-    width: 100%;
-    max-width: 500px;
-    padding: 2.5rem;
-    color: white;
-  }
-  
-  /* Glass button effect */
-  .btn-glass {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    transition: all 0.3s ease;
-  }
-  
-  .btn-glass:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-  }
-  
-  /* Form input styles */
-  .form-control.bg-transparent {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white !important;
-  }
-  
-  .form-control.bg-transparent:focus {
-    background-color: rgba(255, 255, 255, 0.15) !important;
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1);
-    color: white !important;
-  }
-  
-  /* Floating label styles */
-  .floating-label {
-    color: rgba(255, 255, 255, 0.8);
-  }
-  
-  /* Responsive adjustments */
-  @media (max-width: 576px) {
-    .login-container {
-      padding: 1rem;
-    }
-    
-    .auth-card {
-      padding: 1.5rem;
-    }
-  }
-
-  /* Logo styles */
-.header-logo {
-    height: 40px;
-    transition: all 0.3s ease;
-  }
-  
-  .auth-logo {
-    height: 60px;
-    margin-bottom: 1rem;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-  }
-  
-  /* For dark backgrounds, if my logo is dark */
-  .logo-invert {
-    filter: brightness(0) invert(1);
-  }
-  @media (max-width: 576px) {
-  .navbar-logo {
-    height: 30px;
-  }
-  .auth-card-logo {
-    height: 50px;
-  }
+.auth-card, .auth-card-wide {
+  width: 100%;
+  max-width: 440px;                 /* .auth-card-wide will stretch via Bootstrap container */
+  background: rgba(17, 20, 24, 0.72);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  backdrop-filter: blur(6px);
 }
 
-/* Wider register form card */
-.auth-card-wide {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-radius: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-    width: 100%;
-    max-width: 1200px;
-    padding: 2.5rem 3rem;
-    color: white;
-  }
-  
-  /* Adjust padding for smaller screens */
-  @media (max-width: 1200px) {
-    .auth-card-wide {
-      padding: 2rem;
-      max-width: 95%;
-    }
-  }
-  
-  /* I must ensure content doesn't hide behind fixed header/footer */
-  .register-container {
-    padding-top: 80px;
-    padding-bottom: 80px;
-  }
-
-  .loading-spinner {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    color: white;
-    font-size: 1.5rem;
-  }
-
-  /* Quick Actions Panel specific styles */
-.quick-actions-panel {
-  padding: 15px;
+/* Optional: nice-looking primary button on dark bg */
+.btn-glass {
+  background: rgba(33, 150, 243, 0.9);
+  border: none;
 }
+.btn-glass:hover { background: rgba(33, 150, 243, 1); }
 
-.filter-group {
-  margin: 10px 0;
-}
-
-.filter-title {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 8px;
-}
-
-.export-btn {
-  margin-top: 10px;
-}
-
-/* Search input styles */
-.search-input {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-.search-input:focus {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-}
+/* Make Bootstrap inputs readable on dark bg when you use text-white + transparent */
+.form-control.bg-transparent.text-white::placeholder { color: rgba(255,255,255,0.5); }

@@ -1,9 +1,15 @@
-.darkveil-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    display: block;
-  }
+/* DarkVeil.css */
+.dark-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 0;            /* <-- keep it behind the app */
+  pointer-events: none;  /* <-- don't intercept clicks/scroll */
+  /* IMPORTANT: make the veil transparent by default unless you intend to tint it */
+  background: transparent;
+}
+
+/* Make sure your app sits above */
+.app-container {
+  position: relative;
+  z-index: 1;
+}

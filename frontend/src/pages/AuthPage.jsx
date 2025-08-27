@@ -1,20 +1,23 @@
-import { Routes, Route } from 'react-router-dom';
-import LoginForm from '../components/auth/LoginForm';
-import RegisterForm from '../components/auth/RegisterForm';
-import ForgotPassword from '../components/auth/ForgotPassword';
+import { Routes, Route, Navigate } from "react-router-dom";
+import ProtectedRoute from "../components/auth/ProtectedRoute";
+import LoginForm from "../components/auth/LoginForm";
+import RegisterForm from "../components/auth/RegisterForm";
+import ForgotPassword from "../components/auth/ForgotPassword";
+import DashboardPage from "../pages/DashboardPage";
 
-const AuthPage = () => {
+export default function AppRoutes() {
   return (
-    <div className="auth-page">
-      <Routes>
-        <Route path="login" element={<LoginForm />} />
-       
-        <Route path="register" element={<RegisterForm />} />
-        <Route path="*" element={<LoginForm />} />
-        <Route path="forgot-password" element={<ForgotPassword />} />
-      </Routes>
-    </div>
-  );
-};
+    <Routes>
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/auth/login" element={<LoginForm />} />
+      <Route path="/auth/register" element={<RegisterForm />} />
+      <Route path="/auth/forgot-password" element={<ForgotPassword />} />
 
-export default AuthPage;
+      <Route element={<ProtectedRoute />}>
+        <Route path="/dashboard" element={<DashboardPage />} />
+      </Route>
+
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  );
+}
