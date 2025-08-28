@@ -1,33 +1,184 @@
+/* Base */
 html, body, #root { height: 100%; }
 body { background: #0b0f14; color: #e6e6e6; }
 
-/* Auth page layout */
-.login-container, .register-container {
-  min-height: 100vh;
-  padding-top: 96px;                /* space for fixed header in forms */
-  padding-bottom: 64px;
+/* Optional: primary button you already had */
+.btn-glass { background: rgba(33,150,243,0.9); border: none; }
+.btn-glass:hover { background: rgba(33,150,243,1); }
+
+/* Placeholder color on dark */
+.form-control.bg-transparent.text-white::placeholder { color: rgba(255,255,255,0.5); }
+
+/* ────────────────────────────────────────────── */
+/* ===== Auth Viewport (replaces login-container) ===== */
+.auth-viewport {
+  min-height: 100dvh;              /* better on mobile than 100vh */
   display: flex;
-  align-items: flex-start;          /* start below the header */
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  background: #0b0f14;
+  position: relative;              /* so z-indexed footer layers nicely */
 }
 
-.auth-card, .auth-card-wide {
+
+/* Top brand strip */
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  /*background: rgba(255,255,255,0.06);*/
+  
+  border-radius: 400px;
+}
+.auth-wordmark {
+  height: 30px;
+  width: auto;
+  filter: brightness(10);
+}
+
+.auth-card {
   width: 100%;
-  max-width: 440px;                 /* .auth-card-wide will stretch via Bootstrap container */
-  background: rgba(17, 20, 24, 0.72);
+  max-width: 550px;    /* wider card */
+  margin: 48px auto;
+  background: rgba(20,24,28,0.92);
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  border-radius: 14px;
+  padding: 32px 28px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
   backdrop-filter: blur(6px);
 }
 
-/* Optional: nice-looking primary button on dark bg */
-.btn-glass {
-  background: rgba(33, 150, 243, 0.9);
-  border: none;
+/* Auth page full viewport layout */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #0b0f14; /* same dark background */
+  padding: 24px;
 }
-.btn-glass:hover { background: rgba(33, 150, 243, 1); }
 
-/* Make Bootstrap inputs readable on dark bg when you use text-white + transparent */
-.form-control.bg-transparent.text-white::placeholder { color: rgba(255,255,255,0.5); }
+/* Shared card for Login, Register, Forgot */
+.auth-card {
+  width: 100%;
+  max-width: 550px;
+  background: rgba(20,24,28,0.92);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 32px 28px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  backdrop-filter: blur(6px);
+}
+
+
+
+
+.auth-card--glow {
+  box-shadow:
+    0 0 0 1px rgba(33,150,243,0.25) inset,
+    0 0 0 6px rgba(33,150,243,0.08),
+    0 20px 60px rgba(0,0,0,0.55);
+}
+
+/* Crest + titles */
+.auth-crest { display: flex; justify-content: center; margin-bottom: 8px; }
+.auth-crest img { height: 44px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
+.auth-title { text-align: center; margin: 8px 0 2px; font-weight: 700; letter-spacing: 0.2px; }
+.auth-subtitle { text-align: center; margin-bottom: 16px; color: rgba(255,255,255,0.65); }
+
+/* Inputs on dark */
+.auth-input {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #fff !important;
+}
+.auth-input::placeholder { color: rgba(255,255,255,0.5) !important; }
+.auth-input:focus {
+  border-color: rgba(33,150,243,0.65) !important;
+  box-shadow: 0 0 0 0.25rem rgba(33,150,243,0.25) !important;
+}
+.auth-help { color: rgba(255,255,255,0.55); font-size: 12px; margin-top: 6px; }
+
+/* Primary submit */
+.btn-auth {
+  width: 100%;
+  border: none;
+  padding: 10px 14px;
+  font-weight: 600;
+  background: linear-gradient(180deg, rgba(33,150,243,1), rgba(25,118,210,1));
+  color: #fff;
+  border-radius: 10px;
+  transition: transform 0.06s ease, box-shadow 0.2s ease;
+}
+.btn-auth:hover { transform: translateY(-1px); }
+.btn-auth:active { transform: translateY(0); }
+
+/* Links */
+.auth-links { display: grid; gap: 6px; margin-top: 14px; text-align: center; }
+.auth-links a { color: #90caf9; text-decoration: none; }
+.auth-links a:hover { text-decoration: underline; }
+.auth-links .link-muted { color: rgba(255,255,255,0.65); }
+
+/* Footer */
+.auth-footer {
+  position: fixed;                 /* keep at the very bottom of the screen */
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 16px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.6);
+  font-size: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 10;
+
+  /* remove the old full-width bar look */
+  width: auto;
+  text-align: center;
+  /* no border-top, no full-width background strip */
+}
+
+/* Small screens */
+@media (max-width: 480px) {
+  .auth-card { margin: 24px 12px; padding: 20px 16px; }
+}
+
+/* ────────────────────────────────────────────── */
+/* (Old auth container — no longer used; safe to delete)
+.login-container, .register-container {
+  min-height: 100vh;
+  padding-top: 96px;
+  padding-bottom: 64px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+.auth-card, .auth-card-wide { ... }
+*/
+
+.register-card {
+  width: 100%;
+  max-width: 750px;
+  margin: 48px auto;
+  background: rgba(20,24,28,0.92);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 40px 32px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  backdrop-filter: blur(6px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.register-card .form-control {
+  grid-column: span 1;
+}
+.register-card .form-control.full-width {
+  grid-column: span 2;
+}
