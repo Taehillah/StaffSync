@@ -224,7 +224,7 @@
 /* Make glass panels stretch nicely */
 .glass-panel {
   width: 100%;
-  height: auto;  /* was 100%; let content decide, prevents cramped look */
+  height: 100%;  /* I can change it to auto on a later stage */
 }
 
 /* Responsive: stack columns when narrow */
