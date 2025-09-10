@@ -140,6 +140,28 @@ export const mockMembers = [
     created_at: '2020-01-15T00:00:00Z',
     updated_at: '2025-05-20T00:00:00Z'
   },
+  // ─── Additional sample members across more musterings ─────────────────────
+  { member_id: 5, force_number: '92034567P', suffix: 'Mr', rank: 'Lieutenant', first_name: 'Thabo', surname: 'Maseko', id_number: '9001015009087', mustering_code: 'C2', unit_id: 2, email: 'thabo.maseko@saaf.mil', post_description: 'ATC', service_type: 'Permanent Force', is_deployable: true, readinessStatus: 'Ready' },
+  { member_id: 6, force_number: '93011223Q', suffix: 'Ms', rank: 'Sergeant', first_name: 'Lerato', surname: 'Nkosi', id_number: '9305054005086', mustering_code: 'SS', unit_id: 3, email: 'lerato.nkosi@saaf.mil', post_description: 'Catering', service_type: 'Permanent Force', is_deployable: true, readinessStatus: 'Ready' },
+  { member_id: 7, force_number: '91099876R', suffix: 'Mr', rank: 'Captain', first_name: 'Sipho', surname: 'Dlamini', id_number: '8801015009087', mustering_code: 'INT', unit_id: 4, email: 'sipho.dlamini@saaf.mil', post_description: 'Electronic Warfare', service_type: 'Permanent Force', is_deployable: true, readinessStatus: 'Ready' },
+  { member_id: 8, force_number: '90077665S', suffix: 'Ms', rank: 'Corporal', first_name: 'Naledi', surname: 'Molefe', id_number: '9502026009087', mustering_code: 'PROT', unit_id: 5, email: 'naledi.molefe@saaf.mil', post_description: 'Access Control', service_type: 'Permanent Force', is_deployable: false, readinessStatus: 'Pending' },
+  { member_id: 9, force_number: '94022345T', suffix: 'Mr', rank: 'Lieutenant', first_name: 'Kabelo', surname: 'Seabi', id_number: '9201015009087', mustering_code: 'MP', unit_id: 6, email: 'kabelo.seabi@saaf.mil', post_description: 'Military Police', service_type: 'Permanent Force', is_deployable: true, readinessStatus: 'Ready' },
+  { member_id: 10, force_number: '88055661U', suffix: 'Ms', rank: 'Private', first_name: 'Zanele', surname: 'Mahlangu', id_number: '9901015009087', mustering_code: 'BAND', unit_id: 7, email: 'zanele.mahlangu@saaf.mil', post_description: 'Clarinetist', service_type: 'Permanent Force', is_deployable: false, readinessStatus: 'Ready' },
+  { member_id: 11, force_number: '99088821V', suffix: 'Mr', rank: 'Staff Sergeant', first_name: 'Sibusiso', surname: 'Khumalo', id_number: '8701015009087', mustering_code: 'TECH', unit_id: 8, email: 'sibusiso.khumalo@saaf.mil', post_description: 'Aircraft Mechanic', service_type: 'Permanent Force', is_deployable: true, readinessStatus: 'Ready' },
+  { member_id: 12, force_number: '95066773W', suffix: 'Ms', rank: 'Lieutenant', first_name: 'Palesa', surname: 'Mthembu', id_number: '9001015009087', mustering_code: 'ENG', unit_id: 9, email: 'palesa.mthembu@saaf.mil', post_description: 'Software Engineer', service_type: 'Permanent Force', is_deployable: true, readinessStatus: 'Not Ready' },
+  { member_id: 13, force_number: '90033452X', suffix: 'Mr', rank: 'Corporal', first_name: 'Andile', surname: 'Ndlovu', id_number: '9101015009087', mustering_code: 'ARM', unit_id: 10, email: 'andile.ndlovu@saaf.mil', post_description: 'Armourer', service_type: 'Permanent Force', is_deployable: true, readinessStatus: 'Ready' },
+  { member_id: 14, force_number: '88099812Y', suffix: 'Ms', rank: 'Captain', first_name: 'Nomsa', surname: 'Gumede', id_number: '8601015009087', mustering_code: 'LEG', unit_id: 11, email: 'nomsa.gumede@saaf.mil', post_description: 'Advocate', service_type: 'Permanent Force', is_deployable: false, readinessStatus: 'Ready' },
+  { member_id: 15, force_number: '96022145Z', suffix: 'Mr', rank: 'Chaplain', first_name: 'Themba', surname: 'Moyo', id_number: '8201015009087', mustering_code: 'CHAP', unit_id: 12, email: 'themba.moyo@saaf.mil', post_description: 'Chaplain', service_type: 'Permanent Force', is_deployable: false, readinessStatus: 'Ready' },
+  { member_id: 16, force_number: '90112233AA', suffix: 'Ms', rank: 'Lieutenant', first_name: 'Ayanda', surname: 'Cele', id_number: '9001015009087', mustering_code: 'FIN', unit_id: 13, email: 'ayanda.cele@saaf.mil', post_description: 'Budget Manager', service_type: 'Permanent Force', is_deployable: false, readinessStatus: 'Ready' },
+  { member_id: 17, force_number: '93114455BB', suffix: 'Mr', rank: 'Sergeant', first_name: 'Johan', surname: 'van der Merwe', id_number: '8801015009087', mustering_code: 'COM', unit_id: 14, email: 'johan.vdmerwe@saaf.mil', post_description: 'Media Officer', service_type: 'Permanent Force', is_deployable: true, readinessStatus: 'Ready' },
+  { member_id: 18, force_number: '90090909CC', suffix: 'Ms', rank: 'Lieutenant', first_name: 'Lindiwe', surname: 'Khoza', id_number: '9301015009087', mustering_code: 'HR', unit_id: 15, email: 'lindiwe.khoza@saaf.mil', post_description: 'HR Officer', service_type: 'Permanent Force', is_deployable: false, readinessStatus: 'Ready' },
+  { member_id: 19, force_number: '94070707DD', suffix: 'Mr', rank: 'Private', first_name: 'Pieter', surname: 'Botha', id_number: '9201015009087', mustering_code: 'ENV', unit_id: 16, email: 'pieter.botha@saaf.mil', post_description: 'Environmental Tech', service_type: 'Permanent Force', is_deployable: true, readinessStatus: 'Ready' },
+  { member_id: 20, force_number: '97060606EE', suffix: 'Ms', rank: 'Major', first_name: 'Boitumelo', surname: 'Mokoena', id_number: '8701015009087', mustering_code: 'P', unit_id: 1, email: 'boitumelo.mokoena@saaf.mil', post_description: 'Navigator', service_type: 'Permanent Force', is_deployable: true, readinessStatus: 'Ready' },
+  { member_id: 21, force_number: '98121212FF', suffix: 'Mr', rank: 'Sergeant', first_name: 'Kagiso', surname: 'Radebe', id_number: '9501015009087', mustering_code: 'SS', unit_id: 3, email: 'kagiso.radebe@saaf.mil', post_description: 'Fire Fighter', service_type: 'Permanent Force', is_deployable: true, readinessStatus: 'Pending' },
+  { member_id: 22, force_number: '99101010GG', suffix: 'Ms', rank: 'Lieutenant', first_name: 'Palesa', surname: 'Ramathe', id_number: '9801015009087', mustering_code: 'ENG', unit_id: 9, email: 'palesa.ramathe@saaf.mil', post_description: 'Aeronautical Engineer', service_type: 'Permanent Force', is_deployable: true, readinessStatus: 'Ready' },
+  { member_id: 23, force_number: '88080808HH', suffix: 'Mr', rank: 'Captain', first_name: 'Mpho', surname: 'Sibanda', id_number: '8601015009087', mustering_code: 'TECH', unit_id: 8, email: 'mpho.sibanda@saaf.mil', post_description: 'Flight Engineer', service_type: 'Permanent Force', is_deployable: true, readinessStatus: 'Ready' },
+  { member_id: 24, force_number: '87070707II', suffix: 'Ms', rank: 'Corporal', first_name: 'Bongi', surname: 'Khumalo', id_number: '9001015009087', mustering_code: 'PROT', unit_id: 5, email: 'bongi.khumalo@saaf.mil', post_description: 'VIP protector', service_type: 'Permanent Force', is_deployable: true, readinessStatus: 'Ready' },
+  { member_id: 25, force_number: '86060606JJ', suffix: 'Mr', rank: 'Lieutenant', first_name: 'Siyabonga', surname: 'Zondo', id_number: '8901015009087', mustering_code: 'INT', unit_id: 4, email: 'siyabonga.zondo@saaf.mil', post_description: 'Int', service_type: 'Permanent Force', is_deployable: true, readinessStatus: 'Not Ready' },
 ];
 
 export const mockWorkDetails = [
@@ -190,61 +212,50 @@ export const mockWorkDetails = [
 ];
 
 export const mockMusterings = [
-  {
-    code: 'P',
-    name: 'Pilot',
-    description: 'Flight operations personnel'
-  },
-  {
-    code: 'C2',
-    name: 'Command and Control',
-    description: 'Strategic command personnel'
-  },
-  {
-    code: 'SS',
-    name: 'Supply Support',
-    description: 'Logistics'
-  }
+  { code: 'P',    name: 'Pilot',                 description: 'Pilot or Navigator' },
+  { code: 'C2',   name: 'Command and Control',   description: 'OPS, Comms, Radar, ATC, Mission Control, Career Management' },
+  { code: 'SS',   name: 'Supply Support',        description: 'Catering, Air Hostess, Storeman, Fire Fighter, Logcell, Tailor, Procurement' },
+  { code: 'INT',  name: 'Intelligence',          description: 'Int, Electronic Warfare' },
+  { code: 'PROT', name: 'Protection',            description: 'Counter Int, Access Control, VIP protector, Task Force, Instructor' },
+  { code: 'MP',   name: 'Military Police',       description: 'Law enforcement' },
+  { code: 'BAND', name: 'Band',                  description: 'Musicians and ceremonial' },
+  { code: 'TECH', name: 'Technical',             description: 'Aircraft Mechanic, Flight Engineer, Photographer, Motor Mechanic' },
+  { code: 'ENG',  name: 'Engineering',           description: 'Civil, Aeronautical, Software Engineers' },
+  { code: 'ARM',  name: 'Armourer',              description: 'Weapons management' },
+  { code: 'LEG',  name: 'Legal',                 description: 'Judge, Advocate, Lawyer' },
+  { code: 'CHAP', name: 'Chaplain',              description: 'Religious services' },
+  { code: 'FIN',  name: 'Finance',               description: 'Budget Manager, Cashier' },
+  { code: 'COM',  name: 'Corporate Communication', description: 'Public affairs and media' },
+  { code: 'HR',   name: 'Human Resource',        description: 'HR, Adjutant' },
+  { code: 'ENV',  name: 'Environmental',         description: 'Environmental management' },
 ];
 
 export const mockUnits = [
-  {
-    unit_id: 1,
-    mustering_code: 'P',
-    name: '17 Squadron',
-    base_id: 1
-  },
-  {
-    unit_id: 2,
-    mustering_code: 'C2',
-    name: 'Command and Control School',
-    base_id: 2
-  }
+  { unit_id: 1,  mustering_code: 'P',    name: '17 Squadron',                     base_id: 1 },
+  { unit_id: 2,  mustering_code: 'C2',   name: 'Command and Control School',      base_id: 2 },
+  { unit_id: 3,  mustering_code: 'SS',   name: 'Logistics Support Wing',          base_id: 3 },
+  { unit_id: 4,  mustering_code: 'INT',  name: 'Intelligence Wing',               base_id: 1 },
+  { unit_id: 5,  mustering_code: 'PROT', name: 'Protection Services Unit',        base_id: 5 },
+  { unit_id: 6,  mustering_code: 'MP',   name: 'Military Police Detachment',      base_id: 4 },
+  { unit_id: 7,  mustering_code: 'BAND', name: 'Air Force Band',                  base_id: 2 },
+  { unit_id: 8,  mustering_code: 'TECH', name: 'Technical Maintenance Wing',      base_id: 6 },
+  { unit_id: 9,  mustering_code: 'ENG',  name: 'Engineering Directorate',         base_id: 1 },
+  { unit_id: 10, mustering_code: 'ARM',  name: 'Armoury Section',                 base_id: 3 },
+  { unit_id: 11, mustering_code: 'LEG',  name: 'Legal Services',                  base_id: 2 },
+  { unit_id: 12, mustering_code: 'CHAP', name: 'Chaplaincy',                      base_id: 4 },
+  { unit_id: 13, mustering_code: 'FIN',  name: 'Finance Division',                base_id: 6 },
+  { unit_id: 14, mustering_code: 'COM',  name: 'Corporate Communications',        base_id: 5 },
+  { unit_id: 15, mustering_code: 'HR',   name: 'Human Resources',                 base_id: 1 },
+  { unit_id: 16, mustering_code: 'ENV',  name: 'Environmental Affairs',           base_id: 3 },
 ];
 
 export const mockBases = [
-  {
-    base_id: 1,
-    name: 'AFB Waterkloof',
-    city: 'Pretoria',
-    province: 'Gauteng',
-    contact_number: '0126541000'
-  },
-  {
-    base_id: 2,
-    name: 'AFB Swartkop',
-    city: 'Pretoria',
-    province: 'Gauteng',
-    contact_number: '0126542000'
-  },
-  {
-    base_id: 3,
-    name: 'AFB Bloemspruit',
-    city: 'Bloemfontein',
-    province: 'Free State',
-    contact_number: '0516542000'
-  }
-
+  { base_id: 1, name: 'AFB Waterkloof',   city: 'Pretoria',      province: 'Gauteng',    contact_number: '0126541000' },
+  { base_id: 2, name: 'AFB Swartkop',     city: 'Pretoria',      province: 'Gauteng',    contact_number: '0126542000' },
+  { base_id: 3, name: 'AFB Bloemspruit',  city: 'Bloemfontein',  province: 'Free State', contact_number: '0516542000' },
+  { base_id: 4, name: 'AFB Ysterplaat',   city: 'Cape Town',     province: 'Western Cape', contact_number: '0219372000' },
+  { base_id: 5, name: 'AFB Hoedspruit',   city: 'Hoedspruit',    province: 'Limpopo',    contact_number: '0157990000' },
+  { base_id: 6, name: 'AFB Langebaanweg', city: 'Langebaan',     province: 'Western Cape', contact_number: '0227377000' },
 ];
 
 export const mockCombatReadiness = [
@@ -356,6 +367,4 @@ export const mockDependents = [
     is_beneficiary: true
   }
 ];
-
-
 

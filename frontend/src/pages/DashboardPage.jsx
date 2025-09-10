@@ -10,6 +10,7 @@ import { GiRank3, GiCompass, GiSwordWound } from "react-icons/gi";
 import defaultProfile from "../assets/images/default-profile.png";
 import { useAuth } from "../stores/authStore";
 import { fetchPersonnel, exportPersonnelToCSV } from "../services/dataService";
+import { mockMusterings } from "../data/mockData";
 import "../assets/css/Dashboard.css";
 import saafGold from "../assets/images/saafGold.png";
 
@@ -86,15 +87,110 @@ function QuickActionsPanel({ onFilterChange, onExport, canExport }) {
   );
 }
 
-function SidebarNavigation() {
+function SidebarNavigation({ active, onNavigate }) {
+  const item = (key, label, Icon) => (
+    <li className="nav-item">
+      <a
+        href="#"
+        className={`nav-link ${active === key ? "active" : ""}`}
+        onClick={(e) => { e.preventDefault(); onNavigate(key); }}
+      >
+        <Icon className="nav-icon" /> {label}
+      </a>
+    </li>
+  );
   return (
     <ul className="sidebar-nav glass-card">
-      <li className="nav-item"><a className="nav-link" href="#personnel"><GiCompass className="nav-icon" /> Personnel Overview</a></li>
-      <li className="nav-item"><a className="nav-link" href="#mustering"><FaClipboardList className="nav-icon" /> Mustering</a></li>
-      <li className="nav-item"><a className="nav-link" href="#bases"><FaMapMarkedAlt className="nav-icon" /> Bases</a></li>
-      <li className="nav-item"><a className="nav-link" href="#units"><FaUsers className="nav-icon" /> Units</a></li>
-      <li className="nav-item"><a className="nav-link" href="#profile"><FaUserCircle className="nav-icon" /> My Profile</a></li>
+      {item("personnel", "Personnel Overview", GiCompass)}
+      {item("mustering", "Mustering", FaClipboardList)}
+      {item("bases", "Bases", FaMapMarkedAlt)}
+      {item("units", "Units", FaUsers)}
+      {item("profile", "My Profile", FaUserCircle)}
     </ul>
+  );
+}
+
+function MusteringPanel({ rows }) {
+  // normalize helper: get member's mustering code and name
+  const norm = (p) => ({
+    code: p.musteringCode || p.mustering_code || (p.musteringName ? p.musteringName.slice(0,2).toUpperCase() : undefined),
+    name: p.musteringName || p.mustering || p.mustering_code || "Unknown"
+  });
+
+  const musterings = mockMusterings || [];
+
+  // Build counts per mustering code
+  const countsByCode = rows.reduce((acc, p) => {
+    const { code } = norm(p);
+    if (!code) return acc;
+    acc[code] = (acc[code] || 0) + 1;
+    return acc;
+  }, {});
+
+  const [selected, setSelected] = useState(musterings[0]?.code || null);
+
+  const membersForSelected = useMemo(() => {
+    if (!selected) return [];
+    return rows.filter((p) => {
+      const c = p.musteringCode || p.mustering_code || (p.musteringName ? p.musteringName.slice(0,2).toUpperCase() : undefined);
+      return c === selected;
+    });
+  }, [rows, selected]);
+
+  // Group by rank for a simple chart
+  const rankCounts = useMemo(() => {
+    const by = {};
+    for (const p of membersForSelected) {
+      const r = p.rank || "Unknown";
+      by[r] = (by[r] || 0) + 1;
+    }
+    // Convert to sorted entries (desc)
+    return Object.entries(by).sort((a,b) => b[1]-a[1]);
+  }, [membersForSelected]);
+
+  const maxVal = Math.max(1, ...rankCounts.map(([,v]) => v));
+
+  return (
+    <div id="mustering" className="glass-card">
+      <h4><FaClipboardList className="me-2" />Musterings</h4>
+
+      <div className="d-flex flex-wrap gap-2 mb-3">
+        {musterings.map((m) => (
+          <button
+            key={m.code}
+            className={`btn btn-sm ${selected === m.code ? "btn-primary" : "btn-outline-light"}`}
+            onClick={() => setSelected(m.code)}
+            title={m.description}
+          >
+            {m.name} <span className="ms-1 badge bg-secondary">{countsByCode[m.code] || 0}</span>
+          </button>
+        ))}
+      </div>
+
+      {selected && (
+        <div>
+          <h6 className="text-white-50 mb-2">Rank distribution in {musterings.find(m=>m.code===selected)?.name || selected}</h6>
+          {/* Simple SVG horizontal bar chart */}
+          <div className="mb-2" style={{width: '100%', overflowX: 'auto'}}>
+            <svg width="100%" height={Math.max(120, rankCounts.length * 28)} viewBox={`0 0 800 ${Math.max(120, rankCounts.length * 28)}`} preserveAspectRatio="none">
+              {rankCounts.map(([label, value], idx) => {
+                const y = idx * 28 + 6;
+                const w = 700 * (value / maxVal);
+                return (
+                  <g key={label} transform={`translate(60, ${y})`}>
+                    <rect x="0" y="0" width={w} height="18" fill="rgba(33,150,243,0.8)" rx="6" />
+                    <text x={w + 8} y="13" fill="#fff" fontSize="12">{value}</text>
+                    <text x={-8} y="13" fill="#fff" fontSize="12" textAnchor="end">{label}</text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+
+          <div className="text-muted small">Total members: {membersForSelected.length}</div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -246,6 +342,7 @@ export default function DashboardPage() {
   const { user, logout, isLoading } = useAuth();
   const [profilePic, setProfilePic] = useState(null);
   const [activeFilters, setActiveFilters] = useState({ mustering: [], rank: [], readiness: [] });
+  const [activeSection, setActiveSection] = useState("personnel");
 
   const [rows, setRows] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -332,24 +429,32 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <SidebarNavigation />
+          <SidebarNavigation active={activeSection} onNavigate={setActiveSection} />
         </div>
       </aside>
 
       {/* main column */}
       <main className="dashboard-main">
         <div className="glass-panel">
-          <PersonnelOverview
-            rows={rows}
-            onOpen={setViewItem}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            activeFilters={activeFilters}
-            page={page}
-            pageSize={pageSize}
-            setPage={setPage}
-          />
-          <RecentActivities />
+          {activeSection === "personnel" && (
+            <>
+              <PersonnelOverview
+                rows={rows}
+                onOpen={setViewItem}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                activeFilters={activeFilters}
+                page={page}
+                pageSize={pageSize}
+                setPage={setPage}
+              />
+              <RecentActivities />
+            </>
+          )}
+
+          {activeSection === "mustering" && (
+            <MusteringPanel rows={rows} />
+          )}
         </div>
       </main>
 

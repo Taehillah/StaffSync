@@ -3,6 +3,7 @@ html, body, #root { height: 100%; }
 /* Ensure the entire viewport is dark and remove default body margins */
 html { background: #0b0f14; }
 body { background: #0b0f14; color: #fff; margin: 0; }
+#root, .app-container { background: #0b0f14; min-height: 100vh; }
 
 /* Optional: primary button you already had */
 .btn-glass { background: rgba(33,150,243,0.9); border: none; }

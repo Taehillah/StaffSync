@@ -11,17 +11,32 @@ export async function fetchPersonnel() {
   const bList = Array.isArray(mockBases) ? mockBases : [];
   const members = Array.isArray(mockMembers) ? mockMembers : [];
 
-  const mustById = Object.fromEntries(mList.map(m => [m.id, m]));
-  const unitById = Object.fromEntries(uList.map(u => [u.id, u]));
-  const baseById = Object.fromEntries(bList.map(b => [b.id, b]));
+  // Support both id and snake_case ids found in mock data
+  const mustById = Object.fromEntries(mList.map(m => [m.id ?? m.mustering_id ?? m.code, m]));
+  const mustByCode = Object.fromEntries(mList.map(m => [m.code ?? m.id, m]));
+  const unitById = Object.fromEntries(uList.map(u => [u.id ?? u.unit_id, u]));
+  const baseById = Object.fromEntries(bList.map(b => [b.id ?? b.base_id, b]));
 
-  return members.map(m => ({
-    ...m,
-    musteringName: mustById[m.musteringId]?.name ?? m.musteringName ?? "—",
-    unitName:      unitById[m.unitId]?.name      ?? m.unitName      ?? "—",
-    baseName:      baseById[m.baseId]?.name      ?? m.baseName      ?? "—",
-    readinessStatus: m.readinessStatus ?? "Ready",
-  }));
+  return members.map(m => {
+    const unitId = m.unitId ?? m.unit_id;
+    const unit = unitById[unitId];
+    const baseId = m.baseId ?? m.base_id ?? unit?.base_id;
+    const base = baseById[baseId];
+    const mCode = m.musteringCode ?? m.mustering_code;
+    const mustName = (m.musteringName)
+      || (m.musteringId && mustById[m.musteringId]?.name)
+      || (mCode && mustByCode[mCode]?.name)
+      || "—";
+
+    return {
+      ...m,
+      musteringCode: mCode,
+      musteringName: mustName,
+      unitName: unit?.name ?? m.unitName ?? "—",
+      baseName: base?.name ?? m.baseName ?? "—",
+      readinessStatus: m.readinessStatus ?? m.readiness ?? "Ready",
+    };
+  });
 }
 
 export function exportPersonnelToCSV(rows, filename = "personnel.csv") {
