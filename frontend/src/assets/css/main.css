@@ -1,8 +1,27 @@
 /* Base */
 html, body, #root { height: 100%; }
+:root {
+  --bg: #0b0f14;
+  --surface: rgba(20,24,28,0.92);
+  --card: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.08);
+  --text: #ffffff;
+  --text-muted: rgba(255,255,255,0.65);
+  --primary: #2196f3;
+  --primary-strong: #1e88e5;
+  --shadow-lg: 0 20px 60px rgba(0,0,0,0.45);
+}
 /* Ensure the entire viewport is dark and remove default body margins */
 html { background: #0b0f14; }
-body { background: #0b0f14; color: #fff; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
 #root, .app-container { background: #0b0f14; min-height: 100vh; }
 
 /* Shared animated background used by Auth and Dashboard */
@@ -98,11 +117,11 @@ body { background: #0b0f14; color: #fff; margin: 0; }
 .auth-card {
   width: 100%;
   max-width: 600px;
-  background: rgba(20,24,28,0.92);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 32px 28px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  box-shadow: var(--shadow-lg);
   backdrop-filter: blur(6px);
 }
 
@@ -111,7 +130,7 @@ body { background: #0b0f14; color: #fff; margin: 0; }
   box-shadow:
     0 0 0 1px rgba(33,150,243,0.25) inset,
     0 0 0 6px rgba(33,150,243,0.08),
-    0 20px 60px rgba(0,0,0,0.55);
+    var(--shadow-lg);
 }
 
 /* Crest + titles */
@@ -139,7 +158,7 @@ body { background: #0b0f14; color: #fff; margin: 0; }
   border: none;
   padding: 10px 14px;
   font-weight: 600;
-  background: linear-gradient(180deg, rgba(33,150,243,1), rgba(25,118,210,1));
+  background: linear-gradient(180deg, var(--primary), var(--primary-strong));
   color: #fff;
   border-radius: 10px;
   transition: transform 0.06s ease, box-shadow 0.2s ease;
@@ -179,6 +198,16 @@ body { background: #0b0f14; color: #fff; margin: 0; }
 @media (max-width: 480px) {
   .auth-card { margin: 24px 12px; padding: 20px 16px; }
 }
+
+/* Global elegance touches */
+a { color: #90caf9; }
+a:hover { color: #bbdefb; }
+
+/* Minimal, unobtrusive scrollbars */
+*::-webkit-scrollbar { height: 8px; width: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 999px; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
 /* ────────────────────────────────────────────── */
 /* (Old auth container — no longer used; safe to delete)
