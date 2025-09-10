@@ -12,12 +12,8 @@
   gap: 20px;
   min-height: 100vh;
   padding: 20px;
-
-  /* Match auth-viewport visual feel */
-  background:
-    radial-gradient(900px 500px at 75% 10%, rgba(33,150,243,0.10), transparent 60%),
-    radial-gradient(700px 400px at 20% 90%, rgba(0,230,118,0.08), transparent 60%),
-    #0b0f14;
+  /* Background now provided by shared animated layer in main.css */
+  background: transparent;
 }
 
 .dashboard-header {
@@ -292,6 +288,49 @@
 .glass-panel {
   width: 100%;
   height: 100%;  /* I can change it to auto on a later stage */
+}
+
+/* Align charts with section titles (icon width 1em + .me-2 margin) */
+.chart-indent { padding-left: calc(1em + 0.5rem); }
+
+/* Chart layout: SVG + right-aligned big numbers */
+.chart-row { display: flex; align-items: flex-start; gap: 12px; }
+.chart-row .chart-svg { flex: 1 1 auto; }
+.chart-row .chart-values {
+  display: flex; flex-direction: column; align-items: flex-end;
+  min-width: 64px; gap: 10px; /* visual breathing between rows */
+}
+.chart-row .chart-value {
+  height: 28px; line-height: 28px; color: #fff; font-weight: 800;
+  font-size: 22px; letter-spacing: 0.5px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+
+/* ─── Form controls: match auth glass effect ─────────────────────────────── */
+.glass-panel .form-control,
+.glass-panel .form-select,
+.glass-card .form-control,
+.glass-card .form-select {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #fff !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.glass-panel .form-control::placeholder,
+.glass-card .form-control::placeholder { color: rgba(255,255,255,0.55) !important; }
+.glass-panel .form-control:focus,
+.glass-panel .form-select:focus,
+.glass-card .form-control:focus,
+.glass-card .form-select:focus {
+  border-color: rgba(33,150,243,0.65) !important;
+  box-shadow: 0 0 0 0.25rem rgba(33,150,243,0.25) !important;
+}
+.glass-panel .input-group-text,
+.glass-card .input-group-text {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: #fff;
 }
 
 /* Responsive: stack columns when narrow */

@@ -5,6 +5,34 @@ html { background: #0b0f14; }
 body { background: #0b0f14; color: #fff; margin: 0; }
 #root, .app-container { background: #0b0f14; min-height: 100vh; }
 
+/* Shared animated background used by Auth and Dashboard */
+.auth-viewport, .dashboard-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-viewport::before,
+.dashboard-container::before {
+  content: "";
+  position: fixed; /* fixed so the glow feels global and smooth */
+  inset: 0;
+  background:
+    radial-gradient(900px 500px at 75% 10%, rgba(33,150,243,0.10), transparent 60%),
+    radial-gradient(700px 400px at 20% 90%, rgba(0,230,118,0.08), transparent 60%),
+    #0b0f14;
+  z-index: 0;
+  animation: bg-float 22s ease-in-out infinite alternate;
+}
+
+.auth-viewport > *,
+.dashboard-container > * { position: relative; z-index: 1; }
+
+@keyframes bg-float {
+  0%   { transform: translate3d(-1%, -0.5%, 0) scale(1); filter: saturate(100%); }
+  50%  { transform: translate3d(1.5%, 1%, 0) scale(1.02); filter: saturate(105%); }
+  100% { transform: translate3d(-1%, 0.5%, 0) scale(1); filter: saturate(100%); }
+}
+
 /* Optional: primary button you already had */
 .btn-glass { background: rgba(33,150,243,0.9); border: none; }
 .btn-glass:hover { background: rgba(33,150,243,1); }
