@@ -97,7 +97,7 @@ const RegisterForm = () => {
                 <Form.Control
                   type="text"
                   name="forceNumber"
-                  placeholder="12345678MC"
+                  placeholder="Force Number"
                   value={formData.forceNumber}
                   onChange={(e) => {
                     const value = e.target.value.toUpperCase();

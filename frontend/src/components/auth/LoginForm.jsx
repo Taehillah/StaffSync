@@ -6,7 +6,9 @@ import { useAuth } from "../../stores/authStore";
 import crest from "../../assets/images/saafGold.png";
 import wordmark from "../../assets/images/Logo2.png"; // optional wordmark
 
+
 export default function LoginForm() {
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -52,16 +54,16 @@ export default function LoginForm() {
           <FloatingLabel
             controlId="email"
             label="Email address"
-            className="mb-3 text-white"
+             className="mb-4 text-white"
           >
             <Form.Control
               type="email"
-              placeholder="name@example.com"
+              placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               className="auth-input"
-              autoFocus
+              
             />
             <div className="auth-help">
               <FaEnvelope className="me-1" />

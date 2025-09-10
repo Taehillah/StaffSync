@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   Form, 
   Button, 
@@ -131,49 +131,29 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="login-container" style={{ 
-      paddingTop: '80px', 
-      paddingBottom: '80px',
-      minHeight: '100vh'
-    }}>
-      {/* Header with Logo */}
-      <header className="py-3 px-4 w-100 d-flex align-items-center fixed-top" style={{ 
-        background: 'rgba(0, 0, 0, 0.2)',
-        zIndex: 1000
-      }}>
-        <img 
-          src={logo} 
-          alt="StaffSync Logo" 
-          style={{ 
-            height: '40px', 
-            marginRight: '10px',
-            filter: 'brightness(0) invert(1)'
-          }} 
-        />
-        <h1 className="text-white m-0">StaffSync</h1>
-      </header>
+    <div className="auth-viewport">
+      {/* Brand bar like Login */}
+      <div className="auth-brand">
+        <img src={logo} alt="StaffSync" className="auth-wordmark" />
+      </div>
 
-      {/* Main Content */}
+      {/* Card */}
       <div className="auth-card mx-auto">
-        <div className="text-center mb-4">
-          <img 
-            src={logo2} 
-            alt="StaffSync Logo" 
-            style={{ 
-              height: '60px',
-              marginBottom: '1rem',
-              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
-            }} 
+        <div className="text-center mb-3">
+          <img
+            src={logo2}
+            alt="Crest"
+            style={{ height: '44px', width: 'auto', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.35))' }}
           />
-          <h2 className="text-white">
-            {step === 1 ? 'Reset Password' : 
-             step === 2 ? 'Verify OTP' : 
-             'New Password'}
+          <h2 className="text-white mt-2">
+            {step === 1 ? 'Reset Password' : step === 2 ? 'Verify OTP' : 'New Password'}
           </h2>
-          <p className="text-white-50">
-            {step === 1 ? 'Enter your ICENET email and ID number' : 
-             step === 2 ? 'Enter the OTP sent to you' : 
-             'Create a new password (min 12 characters)'}
+          <p className="text-white-50 mb-0">
+            {step === 1
+              ? 'Enter your ICENET email and ID number'
+              : step === 2
+              ? 'Enter the OTP sent to you'
+              : 'Create a new password (min 12 characters)'}
           </p>
         </div>
 
@@ -187,16 +167,13 @@ const ForgotPassword = () => {
               <Form.Control
                 type="email"
                 name="email"
-                placeholder="name@icenet.gov.za"
+                placeholder="ICENET Email"
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="bg-transparent text-white"
+                className="auth-input"
               />
-              <div className="text-white-50 small mt-1">
-                <FaEnvelope className="me-1" />
-                Your official ICENET email
-              </div>
+              <div className="text-white-50 small mt-1">Your official ICENET email</div>
             </FloatingLabel>
 
             <FloatingLabel controlId="idNumber" label="ID Number" className="mb-3">
@@ -207,29 +184,23 @@ const ForgotPassword = () => {
                 value={formData.idNumber}
                 onChange={handleChange}
                 required
-                className="bg-transparent text-white"
+                className="auth-input"
               />
-              <div className="text-white-50 small mt-1">
-                <FaIdCard className="me-1" />
-                Your official ID number
-              </div>
+              <div className="text-white-50 small mt-1">Your official ID number</div>
             </FloatingLabel>
 
-            <div className="d-grid mb-3">
-              <Button 
-                variant="primary" 
-                type="submit"
-                disabled={loading}
-                className="btn-glass"
-              >
+            <div className="d-grid mb-2">
+              <Button variant="primary" type="submit" disabled={loading} className="btn-auth">
                 {loading ? (
                   <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
                 ) : (
-                  <>
-                    Continue
-                  </>
+                  <>Continue</>
                 )}
               </Button>
+            </div>
+
+            <div className="auth-links text-center">
+              <Link to="/auth/login">Remember your password? Login here</Link>
             </div>
           </Form>
         )}
@@ -246,34 +217,22 @@ const ForgotPassword = () => {
                 onChange={handleChange}
                 required
                 maxLength={6}
-                className="bg-transparent text-white"
+                className="auth-input"
               />
               <div className="text-white-50 small mt-1">
-                <FaMobileAlt className="me-1" />
                 Sent to your {formData.otpDestination === 'email' ? 'email' : 'cellphone'}
               </div>
             </FloatingLabel>
 
             <div className="d-grid gap-2">
-              <Button 
-                variant="primary" 
-                type="submit"
-                disabled={loading}
-                className="btn-glass"
-              >
+              <Button variant="primary" type="submit" disabled={loading} className="btn-auth">
                 {loading ? (
                   <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
                 ) : (
-                  <>
-                    Verify OTP
-                  </>
+                  <>Verify OTP</>
                 )}
               </Button>
-              <Button 
-                variant="outline-light" 
-                onClick={() => setStep(1)}
-                className="mt-2"
-              >
+              <Button variant="outline-light" onClick={() => setStep(1)} className="mt-1">
                 Back
               </Button>
             </div>
@@ -292,12 +251,9 @@ const ForgotPassword = () => {
                 onChange={handleChange}
                 required
                 minLength={12}
-                className="bg-transparent text-white"
+                className="auth-input"
               />
-              <div className="text-white-50 small mt-1">
-                <FaLock className="me-1" />
-                Minimum 12 characters
-              </div>
+              <div className="text-white-50 small mt-1">Minimum 12 characters</div>
             </FloatingLabel>
 
             <FloatingLabel controlId="confirmPassword" label="Confirm Password" className="mb-3">
@@ -309,50 +265,30 @@ const ForgotPassword = () => {
                 onChange={handleChange}
                 required
                 minLength={12}
-                className="bg-transparent text-white"
+                className="auth-input"
               />
-              <div className="text-white-50 small mt-1">
-                <FaCheckCircle className="me-1" />
-                Must match new password
-              </div>
+              <div className="text-white-50 small mt-1">Must match new password</div>
             </FloatingLabel>
 
             <div className="d-grid gap-2">
-              <Button 
-                variant="primary" 
-                type="submit"
-                disabled={loading}
-                className="btn-glass"
-              >
+              <Button variant="primary" type="submit" disabled={loading} className="btn-auth">
                 {loading ? (
                   <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
                 ) : (
-                  <>
-                    Reset Password
-                  </>
+                  <>Reset Password</>
                 )}
               </Button>
-              <Button 
-                variant="outline-light" 
-                onClick={() => setStep(2)}
-                className="mt-2"
-              >
+              <Button variant="outline-light" onClick={() => setStep(2)} className="mt-1">
                 Back
               </Button>
             </div>
           </Form>
         )}
-
-        <div className="text-center mt-3">
-          <a href="/auth/login" className="text-white">
-            Remember your password? Login here
-          </a>
-        </div>
       </div>
 
       {/* OTP Method Selection Modal */}
-      <Modal 
-        show={showOTPMethodModal} 
+      <Modal
+        show={showOTPMethodModal}
         onHide={() => setShowOTPMethodModal(false)}
         centered
         backdrop="static"
@@ -362,22 +298,20 @@ const ForgotPassword = () => {
         </Modal.Header>
         <Modal.Body className="bg-dark text-white">
           <div className="d-grid gap-3">
-            <Button 
-              variant="outline-light" 
+            <Button
+              variant="outline-light"
               size="lg"
               onClick={() => handleConfirmOTPMethod('email')}
               className="py-3"
             >
-              <FaEnvelope className="me-2" />
               Send to ICENET Email
             </Button>
-            <Button 
-              variant="outline-light" 
+            <Button
+              variant="outline-light"
               size="lg"
               onClick={() => handleConfirmOTPMethod('cellphone')}
               className="py-3"
             >
-              <FaMobileAlt className="me-2" />
               Send to Registered Cellphone
             </Button>
           </div>
@@ -385,9 +319,7 @@ const ForgotPassword = () => {
       </Modal>
 
       {/* Footer */}
-      <footer className="py-4 text-center text-white-50 small w-100 fixed-bottom" style={{
-        background: 'rgba(0, 0, 0, 0.2)'
-      }}>
+      <footer className="auth-footer">
         © {new Date().getFullYear()} StaffSync. All rights reserved.
       </footer>
     </div>

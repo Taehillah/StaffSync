@@ -1,13 +1,15 @@
 /* Base */
 html, body, #root { height: 100%; }
-body { background: #0b0f14; color: #e6e6e6; }
+/* Ensure the entire viewport is dark and remove default body margins */
+html { background: #0b0f14; }
+body { background: #0b0f14; color: #fff; margin: 0; }
 
 /* Optional: primary button you already had */
 .btn-glass { background: rgba(33,150,243,0.9); border: none; }
 .btn-glass:hover { background: rgba(33,150,243,1); }
 
 /* Placeholder color on dark */
-.form-control.bg-transparent.text-white::placeholder { color: rgba(255,255,255,0.5); }
+.form-control.bg-transparent.text-white::placeholder { color: #fff; }
 
 /* ────────────────────────────────────────────── */
 /* ===== Auth Viewport (replaces login-container) ===== */
@@ -17,7 +19,10 @@ body { background: #0b0f14; color: #e6e6e6; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #0b0f14;
+  background:
+  radial-gradient(900px 500px at 75% 10%, rgba(33,150,243,0.10), transparent 60%),
+  radial-gradient(700px 400px at 20% 90%, rgba(0,230,118,0.08), transparent 60%),
+  #0b0f14;
   position: relative;              /* so z-indexed footer layers nicely */
 }
 
@@ -63,7 +68,7 @@ body { background: #0b0f14; color: #e6e6e6; }
 /* Shared card for Login, Register, Forgot */
 .auth-card {
   width: 100%;
-  max-width: 550px;
+  max-width: 600px;
   background: rgba(20,24,28,0.92);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 14px;
@@ -71,8 +76,6 @@ body { background: #0b0f14; color: #e6e6e6; }
   box-shadow: 0 20px 60px rgba(0,0,0,0.45);
   backdrop-filter: blur(6px);
 }
-
-
 
 
 .auth-card--glow {
@@ -85,8 +88,8 @@ body { background: #0b0f14; color: #e6e6e6; }
 /* Crest + titles */
 .auth-crest { display: flex; justify-content: center; margin-bottom: 8px; }
 .auth-crest img { height: 44px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
-.auth-title { text-align: center; margin: 8px 0 2px; font-weight: 700; letter-spacing: 0.2px; }
-.auth-subtitle { text-align: center; margin-bottom: 16px; color: rgba(255,255,255,0.65); }
+.auth-title { text-align: center; margin: 8px 0 2px; font-weight: 700; letter-spacing: 0.2px; color: #fffffff3;}
+.auth-subtitle { text-align: center; margin-bottom: 16px; color: #d8d8d861; }
 
 /* Inputs on dark */
 .auth-input {
@@ -99,7 +102,7 @@ body { background: #0b0f14; color: #e6e6e6; }
   border-color: rgba(33,150,243,0.65) !important;
   box-shadow: 0 0 0 0.25rem rgba(33,150,243,0.25) !important;
 }
-.auth-help { color: rgba(255,255,255,0.55); font-size: 12px; margin-top: 6px; }
+.auth-help { color: #fff; font-size: 12px; margin-top: 6px; }
 
 /* Primary submit */
 .btn-auth {
@@ -119,7 +122,7 @@ body { background: #0b0f14; color: #e6e6e6; }
 .auth-links { display: grid; gap: 6px; margin-top: 14px; text-align: center; }
 .auth-links a { color: #90caf9; text-decoration: none; }
 .auth-links a:hover { text-decoration: underline; }
-.auth-links .link-muted { color: rgba(255,255,255,0.65); }
+.auth-links .link-muted { color:#fff }
 
 /* Footer */
 .auth-footer {
@@ -130,7 +133,7 @@ body { background: #0b0f14; color: #e6e6e6; }
   padding: 6px 12px;
   border-radius: 999px;
   background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.6);
+  color: #fff;
   font-size: 12px;
   border: 1px solid rgba(255,255,255,0.08);
   backdrop-filter: blur(4px);
