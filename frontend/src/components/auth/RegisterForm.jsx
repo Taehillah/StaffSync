@@ -294,7 +294,7 @@ const RegisterForm = () => {
             </Col>
   
             <Col md={3}>
-              <FloatingLabel controlId="securityClearance" label="Security Clearance" className="mb-2">
+              <FloatingLabel controlId="securityClearance"  className="mb-2">
                 <Form.Select
                   name="securityClearance"
                   value={formData.securityClearance}

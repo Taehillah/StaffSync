@@ -263,7 +263,8 @@ a:hover { color: #bbdefb; }
   width: 100%;
   max-width: 1000px; /* widened to comfortably fit 4 columns (12 fields -> 3 rows) */
   margin: 48px auto;
-  background: rgba(20,24,28,0.92);
+  /* Slightly more transparent for a lighter glass look */
+  background: rgba(20,24,28,0.82);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 14px;
   padding: 40px 32px;
