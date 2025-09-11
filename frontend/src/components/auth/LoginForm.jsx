@@ -41,7 +41,7 @@ export default function LoginForm() {
       </div>
 
       {/* Centered card */}
-      <div className="auth-card auth-card--glow">
+      <div className="auth-card auth-card--glow auth-card--compact">
         <div className="auth-crest">
           <img src={crest} alt="Crest" />
         </div>
