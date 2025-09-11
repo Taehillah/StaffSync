@@ -1,0 +1,44 @@
+type User @table {
+  authId: String!
+  email: String!
+  firstName: String!
+  lastName: String!
+  createdAt: Timestamp!
+  phoneNumber: String
+  profilePictureUrl: String
+  isHRAdmin: Boolean
+}
+
+type Employee @table {
+  user: User
+  employeeId: String!
+  startDate: Date!
+  status: String!
+  endDate: Date
+  address: String
+  dateOfBirth: Date
+}
+
+type Department @table {
+  name: String!
+  createdAt: Timestamp!
+  description: String
+  headOfDepartment: Employee
+}
+
+type JobRole @table {
+  title: String!
+  createdAt: Timestamp!
+  description: String
+  salaryRangeMin: Float
+  salaryRangeMax: Float
+}
+
+type EmploymentHistory @table {
+  employee: Employee!
+  jobRole: JobRole!
+  department: Department!
+  startDate: Date!
+  endDate: Date
+  notes: String
+}

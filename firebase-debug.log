@@ -1,18 +1,18 @@
-[debug] [2025-09-11T17:11:38.124Z] ----------------------------------------------------------------------
-[debug] [2025-09-11T17:11:38.127Z] Command:       /nix/store/ixbb20farqh1f4fqbmsn6b1ixn8mc8ij-nodejs-20.18.1/bin/node /home/user/.global_modules/bin/firebase init
-[debug] [2025-09-11T17:11:38.127Z] CLI Version:   14.16.0
-[debug] [2025-09-11T17:11:38.128Z] Platform:      linux
-[debug] [2025-09-11T17:11:38.128Z] Node Version:  v20.18.1
-[debug] [2025-09-11T17:11:38.128Z] Time:          Thu Sep 11 2025 17:11:38 GMT+0000 (Coordinated Universal Time)
-[debug] [2025-09-11T17:11:38.128Z] ----------------------------------------------------------------------
+[debug] [2025-09-11T17:42:43.213Z] ----------------------------------------------------------------------
+[debug] [2025-09-11T17:42:43.216Z] Command:       /nix/store/ixbb20farqh1f4fqbmsn6b1ixn8mc8ij-nodejs-20.18.1/bin/node /home/user/.global_modules/bin/firebase init hosting
+[debug] [2025-09-11T17:42:43.216Z] CLI Version:   14.16.0
+[debug] [2025-09-11T17:42:43.217Z] Platform:      linux
+[debug] [2025-09-11T17:42:43.217Z] Node Version:  v20.18.1
+[debug] [2025-09-11T17:42:43.217Z] Time:          Thu Sep 11 2025 17:42:43 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-09-11T17:42:43.217Z] ----------------------------------------------------------------------
 [debug] 
-[debug] [2025-09-11T17:11:38.134Z] Checked if tokens are valid: true, expires at: 1757614276452
-[debug] [2025-09-11T17:11:38.134Z] Checked if tokens are valid: true, expires at: 1757614276452
-[debug] [2025-09-11T17:11:38.139Z] >>> [apiv2][query] GET https://monospace-pa.googleapis.com/v1/workspaces/staffsync-71670975 [none]
-[debug] [2025-09-11T17:11:39.144Z] <<< [apiv2][status] GET https://monospace-pa.googleapis.com/v1/workspaces/staffsync-71670975 200
-[debug] [2025-09-11T17:11:39.145Z] <<< [apiv2][body] GET https://monospace-pa.googleapis.com/v1/workspaces/staffsync-71670975 {"workspaceId":"staffsync-71670975","name":"StaffSync","workspaceRedirectUrl":"firebase-staffsync-1757609525300.cluster-64pjnskmlbaxowh5lzq6i7v4ra.cloudworkstations.dev","status":"WORKSPACE_STATUS_RUNNING","lastAccessDatetime":"2025-09-11T16:52:28.680218Z","workspaceTemplate":"WORKSPACE_TEMPLATE_BLANK_WEB","owner":"SELF","serviceAccountEmail":"msp-6866809629626017902@monospace-per-ws-sa-1.iam.gserviceaccount.com","gitRepoUrl":"https://github.com/Taehillah/StaffSync","enableNix":true,"ownerEmail":"ishmaelmafole@gmail.com","workstationAccessToken":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2Nsb3VkLmdvb2dsZS5jb20vd29ya3N0YXRpb25zIiwiYXVkIjoiZmlyZWJhc2Utc3RhZmZzeW5jLTE3NTc2MDk1MjUzMDAuY2x1c3Rlci02NHBqbnNrbWxiYXhvd2g1bHpxNmk3djRyYS5jbG91ZHdvcmtzdGF0aW9ucy5kZXYiLCJpYXQiOjE3NTc2MTA2OTgsImV4cCI6MTc1NzY5NzA5OH0.BAWISOybuL0WeHQAZiEXpSuXWLWPMni_XZhy9OmaeUJyd0tMXb6GgZRW9t81R3N77mAeKLKo3xtl8ogy-Ccbs3okvwwQ_aGX8lD9Nlgm4nKawOy-djphoCKKdi49EM5eW52g5wO69aJii-uUMt1JQPkpX7JRtCRhFKFSmisTYI-JDXDpa0pHmvLZmYsb8znVkdx2o5aqKJC_3m4UgKOCqJ8zltovOLBsT9UAF6TejyGNM-WHw6jfwPGemdGuQCWQYGKNOvRPaNBfgV5DRLCRoDumYayNObjy7LDj5XJV11FSsQodueDdHxypT6KcsKzn3SZ918i3F3DCLRwBwvv-MA"}
-[debug] [2025-09-11T17:11:39.146Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
-[debug] [2025-09-11T17:11:39.146Z] > authorizing via signed-in user (ishmaelmafole@gmail.com)
+[debug] [2025-09-11T17:42:43.223Z] Checked if tokens are valid: true, expires at: 1757614276452
+[debug] [2025-09-11T17:42:43.223Z] Checked if tokens are valid: true, expires at: 1757614276452
+[debug] [2025-09-11T17:42:43.227Z] >>> [apiv2][query] GET https://monospace-pa.googleapis.com/v1/workspaces/staffsync-71670975 [none]
+[debug] [2025-09-11T17:42:44.077Z] <<< [apiv2][status] GET https://monospace-pa.googleapis.com/v1/workspaces/staffsync-71670975 200
+[debug] [2025-09-11T17:42:44.079Z] <<< [apiv2][body] GET https://monospace-pa.googleapis.com/v1/workspaces/staffsync-71670975 {"workspaceId":"staffsync-71670975","name":"StaffSync","workspaceRedirectUrl":"firebase-staffsync-1757609525300.cluster-64pjnskmlbaxowh5lzq6i7v4ra.cloudworkstations.dev","status":"WORKSPACE_STATUS_RUNNING","lastAccessDatetime":"2025-09-11T17:39:02.524642Z","workspaceTemplate":"WORKSPACE_TEMPLATE_BLANK_WEB","owner":"SELF","serviceAccountEmail":"msp-6866809629626017902@monospace-per-ws-sa-1.iam.gserviceaccount.com","gitRepoUrl":"https://github.com/Taehillah/StaffSync","enableNix":true,"ownerEmail":"ishmaelmafole@gmail.com","workstationAccessToken":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2Nsb3VkLmdvb2dsZS5jb20vd29ya3N0YXRpb25zIiwiYXVkIjoiZmlyZWJhc2Utc3RhZmZzeW5jLTE3NTc2MDk1MjUzMDAuY2x1c3Rlci02NHBqbnNrbWxiYXhvd2g1bHpxNmk3djRyYS5jbG91ZHdvcmtzdGF0aW9ucy5kZXYiLCJpYXQiOjE3NTc2MTI1NjMsImV4cCI6MTc1NzY5ODk2M30.NzeUaMW5_vep8kw9pTcQta3CZkAjAwltrFunDgNwuUNivykjoev4k-LvTvh_2ZNaeHoya7rTuYq58sljR78vmLN58lTmfTR5hWvxJztb3RgVRCOvNO85nRzDInLJ97nQvJIsGV6FcIcMyYrdMxGMUGWxzTuxDA4EQoeH8zhNQpRrBBauiMHR2RjV0Nk8Ygv1g9FF_sZpSo4sHJ0OBAaRa4kEeu4iUyynLvu8ul4HXfCMs64oYZJmw_K34V3yvkDvklmkjRKUZuo-xZtLEe_kzR9Om7FV5N5enn1Hi6NCCX4-X66Hd5wNZ0E9CCVst4YweHkgY2ldqpJeNQM4xXYAUg","firebaseProjectId":"staffsync-487eb"}
+[debug] [2025-09-11T17:42:44.080Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-09-11T17:42:44.081Z] > authorizing via signed-in user (ishmaelmafole@gmail.com)
 [info] 
      ######## #### ########  ######## ########     ###     ######  ########
      ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
@@ -24,3 +24,42 @@ You're about to initialize a Firebase project in this directory:
 
   /home/user/StaffSync
 
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2025-09-11T17:42:44.091Z] Using project from CLI flag: staffsync-487eb
+[debug] [2025-09-11T17:42:44.092Z] Checked if tokens are valid: true, expires at: 1757614276452
+[debug] [2025-09-11T17:42:44.092Z] Checked if tokens are valid: true, expires at: 1757614276452
+[debug] [2025-09-11T17:42:44.092Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/staffsync-487eb [none]
+[debug] [2025-09-11T17:42:44.310Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/staffsync-487eb 200
+[debug] [2025-09-11T17:42:44.310Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/staffsync-487eb {"projectId":"staffsync-487eb","projectNumber":"461712444439","displayName":"StaffSync","name":"projects/staffsync-487eb","resources":{"hostingSite":"staffsync-487eb"},"state":"ACTIVE","etag":"1_d7ac0102-0736-4ee1-9fea-8902ee82959c"}
+[info] i  Using project staffsync-487eb (StaffSync) 
+[info] 
+=== Hosting Setup
+[debug] [2025-09-11T17:42:44.437Z] Checked if tokens are valid: true, expires at: 1757614276452
+[debug] [2025-09-11T17:42:44.437Z] Checked if tokens are valid: true, expires at: 1757614276452
+[debug] [2025-09-11T17:42:44.437Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/staffsync-487eb [none]
+[debug] [2025-09-11T17:42:44.646Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/staffsync-487eb 200
+[debug] [2025-09-11T17:42:44.646Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/staffsync-487eb {"projectId":"staffsync-487eb","projectNumber":"461712444439","displayName":"StaffSync","name":"projects/staffsync-487eb","resources":{"hostingSite":"staffsync-487eb"},"state":"ACTIVE","etag":"1_d7ac0102-0736-4ee1-9fea-8902ee82959c"}
+[info] 
+[info] Your public directory is the folder (relative to your project directory) that
+[info] will contain Hosting assets to be uploaded with firebase deploy. If you
+[info] have a build process for your assets, use your build's output directory.
+[info] 
+[info] i  public/404.html is unchanged 
+[debug] [2025-09-11T17:44:37.780Z] >>> [apiv2][query] GET https://www.gstatic.com/firebasejs/releases.json [none]
+[debug] [2025-09-11T17:44:37.815Z] <<< [apiv2][status] GET https://www.gstatic.com/firebasejs/releases.json 200
+[debug] [2025-09-11T17:44:37.815Z] <<< [apiv2][body] GET https://www.gstatic.com/firebasejs/releases.json {"current":{"version":"12.2.1","browserURL":"https://www.gstatic.com/firebasejs/12.2.1/firebase.js","packageURL":"https://www.gstatic.com/firebasejs/12.2.1/firebase.tgz"},"live":{"version":"12.2","browserURL":"https://www.gstatic.com/firebasejs/live/12.2/firebase.js","packageURL":"https://www.gstatic.com/firebasejs/live/12.2/firebase.tgz"},"components":{"ai":"https://www.gstatic.com/firebasejs/12.2.1/firebase-ai.js","analytics":"https://www.gstatic.com/firebasejs/12.2.1/firebase-analytics.js","app":"https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js","app-check":"https://www.gstatic.com/firebasejs/12.2.1/firebase-app-check.js","auth":"https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js","auth/cordova":"https://www.gstatic.com/firebasejs/12.2.1/firebase-auth/cordova.js","auth/web-extension":"https://www.gstatic.com/firebasejs/12.2.1/firebase-auth/web-extension.js","functions":"https://www.gstatic.com/firebasejs/12.2.1/firebase-functions.js","firestore":"https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js","firestore/lite":"https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore/lite.js","installations":"https://www.gstatic.com/firebasejs/12.2.1/firebase-installations.js","storage":"https://www.gstatic.com/firebasejs/12.2.1/firebase-storage.js","performance":"https://www.gstatic.com/firebasejs/12.2.1/firebase-performance.js","remote-config":"https://www.gstatic.com/firebasejs/12.2.1/firebase-remote-config.js","messaging":"https://www.gstatic.com/firebasejs/12.2.1/firebase-messaging.js","messaging/sw":"https://www.gstatic.com/firebasejs/12.2.1/firebase-messaging/sw.js","database":"https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js","data-connect":"https://www.gstatic.com/firebasejs/12.2.1/firebase-data-connect.js","firestore.memory":"https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.memory.js"}}
+[info] i  public/index.html is unchanged 
+[info] 
+[info] i  Detected a .git folder at /home/user/StaffSync 
+[info] i  Authorizing with GitHub to upload your service account to a GitHub repository's secrets store. 
+[info] 
+[info] Visit this URL on this device to log in:
+[info] https://github.com/login/oauth/authorize?client_id=89cf50f02ac6aaed3484&state=175377456&redirect_uri=http%3A%2F%2Flocalhost%3A9005&scope=read%3Auser%20repo%20public_repo
+[info] 
+[info] Waiting for authentication...

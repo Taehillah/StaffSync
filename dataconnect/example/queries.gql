@@ -1,0 +1,31 @@
+mutation CreateAbsence @auth(level: USER) {
+  absence_insert(data: {
+    employeeUid_expr: "auth.uid",
+    startDate: "2024-03-15T00:00:00Z",
+    endDate: "2024-03-16T00:00:00Z",
+    reason: "Sick leave"
+  })
+}
+
+query ListMyShifts @auth(level: USER) {
+  shifts(where: {employeeUid: {eq_expr: "auth.uid"}}) {
+    id
+    startTime
+    endTime
+    role
+  }
+}
+
+mutation UpdateEmployeeProfile($displayName: String!) @auth(level: USER) {
+  employee_update(key: {uid_expr: "auth.uid"}, data: {
+    displayName: $displayName
+  })
+}
+
+query ListAvailableRoles @auth(level: PUBLIC) {
+  roles {
+    id
+    name
+    description
+  }
+}
