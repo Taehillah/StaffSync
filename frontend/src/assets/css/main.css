@@ -24,16 +24,6 @@ body {
 }
 #root, .app-container { background: #0b0f14; min-height: 100vh; }
 
-/* Global UI scale: reduce overall UI by 20% */
-:root { --ui-scale: 0.8; }
-.app-container {
-  transform: scale(var(--ui-scale));
-  transform-origin: top left;
-  /* Expand container so scaled content still fills viewport */
-  width: calc(100% / var(--ui-scale));
-  min-height: calc(100vh / var(--ui-scale));
-}
-
 /* Shared animated background used by Auth and Dashboard */
 .auth-viewport, .dashboard-container {
   position: relative;
