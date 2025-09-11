@@ -288,3 +288,15 @@ a:hover { color: #bbdefb; }
   padding: 7px 12px;       /* same as .auth-card--compact */
   font-size: 0.95rem;      /* visual parity */
 }
+
+/* Ensure FloatingLabel fields in Register respect compact height */
+.register-card .form-floating > .form-control,
+.register-card .form-floating > .form-select {
+  height: 38px !important;
+  min-height: 38px !important;
+  padding-top: .5rem !important;
+  padding-bottom: .5rem !important;
+}
+.register-card .form-floating > label {
+  padding: .5rem .75rem !important;
+}
