@@ -78,7 +78,7 @@ const RegisterForm = () => {
         <img src={wordmark} alt="StaffSync" className="auth-wordmark" />
       </div>
   
-      <div className="register-card">{/* wider + roomy card */}
+      <div className="register-card auth-card--glow">{/* wider + roomy card with glow */}
         {/* Crest + Titles */}
         <div className="text-center mb-3" style={{ gridColumn: '1 / -1' }}>
           <img

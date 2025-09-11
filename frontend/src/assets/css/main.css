@@ -281,6 +281,14 @@ a:hover { color: #bbdefb; }
   grid-column: span 2;
 }
 
+/* Give Register the same outer glow as Login when class present */
+.register-card.auth-card--glow {
+  box-shadow:
+    0 0 0 1px rgba(33,150,243,0.25) inset,
+    0 0 0 6px rgba(33,150,243,0.08),
+    var(--shadow-lg);
+}
+
 /* Match Register inputs to Login compact sizing */
 .register-card .form-control,
 .register-card .form-select {
