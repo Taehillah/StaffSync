@@ -1,0 +1,26 @@
+[debug] [2025-09-11T17:11:38.124Z] ----------------------------------------------------------------------
+[debug] [2025-09-11T17:11:38.127Z] Command:       /nix/store/ixbb20farqh1f4fqbmsn6b1ixn8mc8ij-nodejs-20.18.1/bin/node /home/user/.global_modules/bin/firebase init
+[debug] [2025-09-11T17:11:38.127Z] CLI Version:   14.16.0
+[debug] [2025-09-11T17:11:38.128Z] Platform:      linux
+[debug] [2025-09-11T17:11:38.128Z] Node Version:  v20.18.1
+[debug] [2025-09-11T17:11:38.128Z] Time:          Thu Sep 11 2025 17:11:38 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-09-11T17:11:38.128Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-09-11T17:11:38.134Z] Checked if tokens are valid: true, expires at: 1757614276452
+[debug] [2025-09-11T17:11:38.134Z] Checked if tokens are valid: true, expires at: 1757614276452
+[debug] [2025-09-11T17:11:38.139Z] >>> [apiv2][query] GET https://monospace-pa.googleapis.com/v1/workspaces/staffsync-71670975 [none]
+[debug] [2025-09-11T17:11:39.144Z] <<< [apiv2][status] GET https://monospace-pa.googleapis.com/v1/workspaces/staffsync-71670975 200
+[debug] [2025-09-11T17:11:39.145Z] <<< [apiv2][body] GET https://monospace-pa.googleapis.com/v1/workspaces/staffsync-71670975 {"workspaceId":"staffsync-71670975","name":"StaffSync","workspaceRedirectUrl":"firebase-staffsync-1757609525300.cluster-64pjnskmlbaxowh5lzq6i7v4ra.cloudworkstations.dev","status":"WORKSPACE_STATUS_RUNNING","lastAccessDatetime":"2025-09-11T16:52:28.680218Z","workspaceTemplate":"WORKSPACE_TEMPLATE_BLANK_WEB","owner":"SELF","serviceAccountEmail":"msp-6866809629626017902@monospace-per-ws-sa-1.iam.gserviceaccount.com","gitRepoUrl":"https://github.com/Taehillah/StaffSync","enableNix":true,"ownerEmail":"ishmaelmafole@gmail.com","workstationAccessToken":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2Nsb3VkLmdvb2dsZS5jb20vd29ya3N0YXRpb25zIiwiYXVkIjoiZmlyZWJhc2Utc3RhZmZzeW5jLTE3NTc2MDk1MjUzMDAuY2x1c3Rlci02NHBqbnNrbWxiYXhvd2g1bHpxNmk3djRyYS5jbG91ZHdvcmtzdGF0aW9ucy5kZXYiLCJpYXQiOjE3NTc2MTA2OTgsImV4cCI6MTc1NzY5NzA5OH0.BAWISOybuL0WeHQAZiEXpSuXWLWPMni_XZhy9OmaeUJyd0tMXb6GgZRW9t81R3N77mAeKLKo3xtl8ogy-Ccbs3okvwwQ_aGX8lD9Nlgm4nKawOy-djphoCKKdi49EM5eW52g5wO69aJii-uUMt1JQPkpX7JRtCRhFKFSmisTYI-JDXDpa0pHmvLZmYsb8znVkdx2o5aqKJC_3m4UgKOCqJ8zltovOLBsT9UAF6TejyGNM-WHw6jfwPGemdGuQCWQYGKNOvRPaNBfgV5DRLCRoDumYayNObjy7LDj5XJV11FSsQodueDdHxypT6KcsKzn3SZ918i3F3DCLRwBwvv-MA"}
+[debug] [2025-09-11T17:11:39.146Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-09-11T17:11:39.146Z] > authorizing via signed-in user (ishmaelmafole@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /home/user/StaffSync
+
