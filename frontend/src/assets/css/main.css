@@ -134,6 +134,18 @@ body {
     var(--shadow-lg);
 }
 
+/* Ensure compact layout also sizes FloatingLabel controls (used in Forgot) */
+.auth-card--compact .form-floating > .form-control,
+.auth-card--compact .form-floating > .form-select {
+  height: 38px !important;
+  min-height: 38px !important;
+  padding-top: .5rem !important;
+  padding-bottom: .5rem !important;
+}
+.auth-card--compact .form-floating > label {
+  padding: .5rem .75rem !important;
+}
+
 /* Crest + titles */
 .auth-crest { display: flex; justify-content: center; margin-bottom: 8px; }
 .auth-crest img { height: 44px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }

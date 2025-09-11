@@ -138,7 +138,7 @@ const ForgotPassword = () => {
       </div>
 
       {/* Card */}
-      <div className="auth-card mx-auto">
+      <div className="auth-card auth-card--glow auth-card--compact mx-auto">
         <div className="text-center mb-3">
           <img
             src={logo2}
