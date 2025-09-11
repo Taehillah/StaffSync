@@ -55,7 +55,6 @@ export default function LoginForm() {
             <Form.Label className="text-white">Email address</Form.Label>
             <Form.Control
               type="email"
-              placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -71,7 +70,6 @@ export default function LoginForm() {
             <Form.Label className="text-white">Password</Form.Label>
             <Form.Control
               type="password"
-              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
