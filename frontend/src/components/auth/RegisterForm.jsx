@@ -25,6 +25,7 @@ const RANK_OPTIONS = [
 ];
 
 const DEPARTMENT_OPTIONS = ['Army', 'SAAF', 'Navy', 'SAMHS', 'DI'];
+const SECURITY_CLEARANCE_OPTIONS = ['Restricted', 'Confidential', 'Secret', 'Top Secret'];
 
 const RegisterForm = () => {
   const [formData, setFormData] = useState({
@@ -293,15 +294,18 @@ const RegisterForm = () => {
             </Col>
   
             <Col md={3}>
-              <FloatingLabel controlId="securityClearance"  className="mb-2">
-                <Form.Control
-                  type="text"
+              <FloatingLabel controlId="securityClearance" label="Security Clearance" className="mb-2">
+                <Form.Select
                   name="securityClearance"
-                  placeholder="Security Clearance"
                   value={formData.securityClearance}
                   onChange={handleChange}
                   className="auth-input"
-                />
+                >
+                  <option value="">Select clearance...</option>
+                  {SECURITY_CLEARANCE_OPTIONS.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </Form.Select>
                 <div className="text-white-50 small mt-1">Clearance level</div>
               </FloatingLabel>
             </Col>
