@@ -57,7 +57,7 @@ body {
 .btn-glass:hover { background: rgba(33,150,243,1); }
 
 /* Placeholder color on dark */
-.form-control.bg-transparent.text-white::placeholder { color: #fff; }
+.form-control.bg-transparent.text-white::placeholder { color: rgba(255,255,255,0.55); }
 
 /* ────────────────────────────────────────────── */
 /* ===== Auth Viewport (replaces login-container) ===== */
@@ -145,12 +145,35 @@ body {
   border: 1px solid rgba(255,255,255,0.14) !important;
   color: #fff !important;
 }
-.auth-input::placeholder { color: rgba(255,255,255,0.5) !important; }
+.auth-input::placeholder { color: rgba(255,255,255,0.55) !important; }
 .auth-input:focus {
   border-color: rgba(33,150,243,0.65) !important;
   box-shadow: 0 0 0 0.25rem rgba(33,150,243,0.25) !important;
 }
 .auth-help { color: #fff; font-size: 12px; margin-top: 6px; }
+
+/* Global form input styling to match Dashboard glass look */
+.form-control,
+.form-select {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #fff !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.form-control::placeholder {
+  color: rgba(255,255,255,0.55) !important;
+}
+.form-control:focus,
+.form-select:focus {
+  border-color: rgba(33,150,243,0.65) !important;
+  box-shadow: 0 0 0 0.25rem rgba(33,150,243,0.25) !important;
+}
+.input-group-text {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: #fff;
+}
 
 /* Primary submit */
 .btn-auth {
