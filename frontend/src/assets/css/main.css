@@ -280,3 +280,11 @@ a:hover { color: #bbdefb; }
 .register-card .form-control.full-width {
   grid-column: span 2;
 }
+
+/* Match Register inputs to Login compact sizing */
+.register-card .form-control,
+.register-card .form-select {
+  height: 38px;            /* same as .auth-card--compact */
+  padding: 7px 12px;       /* same as .auth-card--compact */
+  font-size: 0.95rem;      /* visual parity */
+}
