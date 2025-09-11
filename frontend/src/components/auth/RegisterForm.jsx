@@ -11,12 +11,22 @@ import {
 } from 'react-bootstrap';
 import { FaUser, FaIdCard, FaPhone, FaEnvelope, FaBriefcase, FaBuilding, FaClipboardList, FaSignInAlt } from 'react-icons/fa';
 import { useAuth } from '../../stores/authStore.js';
+import { mockUnits, mockMusterings } from '../../data/mockData';
 import wordmark from '../../assets/images/Logo2.png';
 import crest from '../../assets/images/saafGold.png';
 import {
   validateForceNumber,
   musteringCodes,
 } from '../../utils/authPageValidations.js';
+
+// Shared rank options (kept consistent with Dashboard)
+const RANK_OPTIONS = [
+  'Gen', 'Lt Gen', 'Maj Gen', 'Brig Gen', 'Col', 'Lt Col', 'Maj', 'Capt', 'Lt', '2Lt',
+  'SCMWO', 'CMWO', 'MWO', 'WO1', 'WO2', 'FSgt', 'Sgt', 'Cpl', 'LCpl', 'Amn',
+  'Mrs', 'Mr', 'Ms'
+];
+
+const DEPARTMENT_OPTIONS = ['Army', 'SAAF', 'Navy', 'SAMHS', 'DI'];
 
 const RegisterForm = () => {
   const [formData, setFormData] = useState({
@@ -151,15 +161,18 @@ const RegisterForm = () => {
   
             <Col md={6}>
               <FloatingLabel controlId="rank" label="Rank" className="mb-2">
-                <Form.Control
-                  type="text"
+                <Form.Select
                   name="rank"
-                  placeholder="Rank"
                   value={formData.rank}
                   onChange={handleChange}
                   required
                   className="auth-input"
-                />
+                >
+                  <option value="">Select rank...</option>
+                  {RANK_OPTIONS.map(r => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </Form.Select>
                 <div className="text-white-50 small mt-1">Current rank</div>
               </FloatingLabel>
             </Col>
@@ -182,15 +195,18 @@ const RegisterForm = () => {
   
             <Col md={6}>
               <FloatingLabel controlId="unit" label="Unit" className="mb-2">
-                <Form.Control
-                  type="text"
+                <Form.Select
                   name="unit"
-                  placeholder="Unit"
                   value={formData.unit}
                   onChange={handleChange}
                   required
                   className="auth-input"
-                />
+                >
+                  <option value="">Select unit...</option>
+                  {(mockUnits || []).map(u => (
+                    <option key={u.unit_id} value={u.name}>{u.name}</option>
+                  ))}
+                </Form.Select>
                 <div className="text-white-50 small mt-1">Current unit</div>
               </FloatingLabel>
             </Col>
@@ -244,15 +260,18 @@ const RegisterForm = () => {
   
             <Col md={6}>
               <FloatingLabel controlId="mustering" label="Mustering" className="mb-2">
-                <Form.Control
-                  type="text"
+                <Form.Select
                   name="mustering"
-                  placeholder="Mustering"
                   value={formData.mustering}
                   onChange={handleChange}
                   required
                   className="auth-input"
-                />
+                >
+                  <option value="">Select mustering...</option>
+                  {(mockMusterings || []).map(m => (
+                    <option key={m.code} value={m.code}>{m.code} — {m.name}</option>
+                  ))}
+                </Form.Select>
                 <div className="text-white-50 small mt-1">Mustering information</div>
               </FloatingLabel>
             </Col>
@@ -260,14 +279,17 @@ const RegisterForm = () => {
             {/* Row 6 */}
             <Col md={6}>
               <FloatingLabel controlId="department" label="Department" className="mb-2">
-                <Form.Control
-                  type="text"
+                <Form.Select
                   name="department"
-                  placeholder="Department"
                   value={formData.department}
                   onChange={handleChange}
                   className="auth-input"
-                />
+                >
+                  <option value="">Select department...</option>
+                  {DEPARTMENT_OPTIONS.map(d => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </Form.Select>
                 <div className="text-white-50 small mt-1">Department/Section</div>
               </FloatingLabel>
             </Col>
