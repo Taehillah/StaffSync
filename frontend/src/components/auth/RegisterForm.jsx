@@ -103,10 +103,11 @@ const RegisterForm = () => {
           <Row className="g-4">
             {/* Row 1 */}
             <Col md={3}>
-              <FloatingLabel controlId="forceNumber"  className="mb-2">
+              <FloatingLabel controlId="forceNumber" label="Force Number" className="mb-2">
                 <Form.Control
                   type="text"
                   name="forceNumber"
+                  placeholder="Force Number"
                   value={formData.forceNumber}
                   onChange={(e) => {
                     const value = e.target.value.toUpperCase();
@@ -122,16 +123,17 @@ const RegisterForm = () => {
                   Force number should be 8 digits followed by MC/MI/PE/PV.
                 </Form.Control.Feedback>
                 <div className="text-white-50 small mt-1">
-                  8 digits + suffix (MC, MI, PE, or PV)
+                  8 digits + suffix (MC,MI,PE ect)
                 </div>
               </FloatingLabel>
             </Col>
   
             <Col md={3}>
-              <FloatingLabel controlId="surname"  className="mb-2">
+              <FloatingLabel controlId="surname" label="Surname" className="mb-2">
                 <Form.Control
                   type="text"
                   name="surname"
+                  placeholder="Surname"
                   value={formData.surname}
                   onChange={handleChange}
                   required
@@ -143,10 +145,11 @@ const RegisterForm = () => {
   
             {/* Row 2 */}
             <Col md={3}>
-              <FloatingLabel controlId="cellphone"  className="mb-2">
+              <FloatingLabel controlId="cellphone" label="Cellphone" className="mb-2">
                 <Form.Control
                   type="tel"
                   name="cellphone"
+                  placeholder="Cellphone"
                   value={formData.cellphone}
                   onChange={handleChange}
                   required
@@ -157,7 +160,7 @@ const RegisterForm = () => {
             </Col>
   
             <Col md={3}>
-              <FloatingLabel controlId="rank"  className="mb-2">
+              <FloatingLabel controlId="rank" label="Rank" className="mb-2">
                 <Form.Select
                   name="rank"
                   value={formData.rank}
@@ -176,10 +179,11 @@ const RegisterForm = () => {
   
             {/* Row 3 */}
             <Col md={3}>
-              <FloatingLabel controlId="idNumber"  className="mb-2">
+              <FloatingLabel controlId="idNumber" label="ID Number" className="mb-2">
                 <Form.Control
                   type="text"
                   name="idNumber"
+                  placeholder="ID Number"
                   value={formData.idNumber}
                   onChange={handleChange}
                   required
@@ -190,7 +194,7 @@ const RegisterForm = () => {
             </Col>
   
             <Col md={3}>
-              <FloatingLabel controlId="unit"  className="mb-2">
+              <FloatingLabel controlId="unit" label="Unit" className="mb-2">
                 <Form.Select
                   name="unit"
                   value={formData.unit}
@@ -209,10 +213,11 @@ const RegisterForm = () => {
   
             {/* Row 4 */}
             <Col md={3}>
-              <FloatingLabel controlId="firstName"  className="mb-2">
+              <FloatingLabel controlId="firstName" label="First Name(s)" className="mb-2">
                 <Form.Control
                   type="text"
                   name="firstName"
+                  placeholder="First Name(s)"
                   value={formData.firstName}
                   onChange={handleChange}
                   required
@@ -223,10 +228,11 @@ const RegisterForm = () => {
             </Col>
   
             <Col md={3}>
-              <FloatingLabel controlId="email"  className="mb-2">
+              <FloatingLabel controlId="email" label="Email" className="mb-2">
                 <Form.Control
                   type="email"
                   name="email"
+                  placeholder="Email"
                   value={formData.email}
                   onChange={handleChange}
                   required
@@ -238,10 +244,11 @@ const RegisterForm = () => {
   
             {/* Row 5 */}
             <Col md={3}>
-              <FloatingLabel controlId="workTel"  className="mb-2">
+              <FloatingLabel controlId="workTel" label="Work Telephone" className="mb-2">
                 <Form.Control
                   type="tel"
                   name="workTel"
+                  placeholder="Work Telephone"
                   value={formData.workTel}
                   onChange={handleChange}
                   required
@@ -252,7 +259,7 @@ const RegisterForm = () => {
             </Col>
   
             <Col md={3}>
-              <FloatingLabel controlId="mustering"  className="mb-2">
+              <FloatingLabel controlId="mustering" label="Mustering" className="mb-2">
                 <Form.Select
                   name="mustering"
                   value={formData.mustering}
@@ -292,6 +299,7 @@ const RegisterForm = () => {
                 <Form.Control
                   type="text"
                   name="securityClearance"
+                  placeholder="Security Clearance"
                   value={formData.securityClearance}
                   onChange={handleChange}
                   className="auth-input"
