@@ -102,7 +102,7 @@ const RegisterForm = () => {
           {/* Bigger gap between fields */}
           <Row className="g-4">
             {/* Row 1 */}
-            <Col md={6}>
+            <Col md={4}>
               <FloatingLabel controlId="forceNumber" label="Force Number" className="mb-2">
                 <Form.Control
                   type="text"
@@ -128,7 +128,7 @@ const RegisterForm = () => {
               </FloatingLabel>
             </Col>
   
-            <Col md={6}>
+            <Col md={4}>
               <FloatingLabel controlId="surname" label="Surname" className="mb-2">
                 <Form.Control
                   type="text"
@@ -144,7 +144,7 @@ const RegisterForm = () => {
             </Col>
   
             {/* Row 2 */}
-            <Col md={6}>
+            <Col md={4}>
               <FloatingLabel controlId="cellphone" label="Cellphone" className="mb-2">
                 <Form.Control
                   type="tel"
@@ -159,7 +159,7 @@ const RegisterForm = () => {
               </FloatingLabel>
             </Col>
   
-            <Col md={6}>
+            <Col md={4}>
               <FloatingLabel controlId="rank" label="Rank" className="mb-2">
                 <Form.Select
                   name="rank"
@@ -178,7 +178,7 @@ const RegisterForm = () => {
             </Col>
   
             {/* Row 3 */}
-            <Col md={6}>
+            <Col md={4}>
               <FloatingLabel controlId="idNumber" label="ID Number" className="mb-2">
                 <Form.Control
                   type="text"
@@ -193,7 +193,7 @@ const RegisterForm = () => {
               </FloatingLabel>
             </Col>
   
-            <Col md={6}>
+            <Col md={4}>
               <FloatingLabel controlId="unit" label="Unit" className="mb-2">
                 <Form.Select
                   name="unit"
@@ -212,7 +212,7 @@ const RegisterForm = () => {
             </Col>
   
             {/* Row 4 */}
-            <Col md={6}>
+            <Col md={4}>
               <FloatingLabel controlId="firstName" label="First Name(s)" className="mb-2">
                 <Form.Control
                   type="text"
@@ -227,7 +227,7 @@ const RegisterForm = () => {
               </FloatingLabel>
             </Col>
   
-            <Col md={6}>
+            <Col md={4}>
               <FloatingLabel controlId="email" label="Email" className="mb-2">
                 <Form.Control
                   type="email"
@@ -243,7 +243,7 @@ const RegisterForm = () => {
             </Col>
   
             {/* Row 5 */}
-            <Col md={6}>
+            <Col md={4}>
               <FloatingLabel controlId="workTel" label="Work Telephone" className="mb-2">
                 <Form.Control
                   type="tel"
@@ -258,7 +258,7 @@ const RegisterForm = () => {
               </FloatingLabel>
             </Col>
   
-            <Col md={6}>
+            <Col md={4}>
               <FloatingLabel controlId="mustering" label="Mustering" className="mb-2">
                 <Form.Select
                   name="mustering"
@@ -277,7 +277,7 @@ const RegisterForm = () => {
             </Col>
   
             {/* Row 6 */}
-            <Col md={6}>
+            <Col md={4}>
               <FloatingLabel controlId="department" label="Department" className="mb-2">
                 <Form.Select
                   name="department"
