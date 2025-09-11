@@ -8,7 +8,6 @@ import {
   FloatingLabel,
   Modal
 } from 'react-bootstrap';
-import { FaEnvelope, FaIdCard, FaMobileAlt, FaLock, FaCheckCircle } from 'react-icons/fa';
 import logo from '../../assets/images/Logo2.png';
 import logo2 from '../../assets/images/saafGold.png';
 
