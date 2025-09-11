@@ -163,7 +163,7 @@ const ForgotPassword = () => {
         {/* Step 1: Verify Identity */}
         {step === 1 && (
           <Form onSubmit={handleSendOTP}>
-            <FloatingLabel controlId="email" label="ICENET Email" className="mb-3">
+            <FloatingLabel controlId="email" className="mb-3">
               <Form.Control
                 type="email"
                 name="email"
@@ -176,7 +176,7 @@ const ForgotPassword = () => {
               <div className="text-white-50 small mt-1">Your official ICENET email</div>
             </FloatingLabel>
 
-            <FloatingLabel controlId="idNumber" label="ID Number" className="mb-3">
+            <FloatingLabel controlId="idNumber" className="mb-3">
               <Form.Control
                 type="text"
                 name="idNumber"
@@ -208,7 +208,7 @@ const ForgotPassword = () => {
         {/* Step 2: OTP Verification */}
         {step === 2 && (
           <Form onSubmit={handleVerifyOTP}>
-            <FloatingLabel controlId="otp" label="OTP Code" className="mb-3">
+            <FloatingLabel controlId="otp" className="mb-3">
               <Form.Control
                 type="text"
                 name="otp"
@@ -242,7 +242,7 @@ const ForgotPassword = () => {
         {/* Step 3: New Password */}
         {step === 3 && (
           <Form onSubmit={handleResetPassword}>
-            <FloatingLabel controlId="newPassword" label="New Password" className="mb-3">
+            <FloatingLabel controlId="newPassword" className="mb-3">
               <Form.Control
                 type="password"
                 name="newPassword"
@@ -256,7 +256,7 @@ const ForgotPassword = () => {
               <div className="text-white-50 small mt-1">Minimum 12 characters</div>
             </FloatingLabel>
 
-            <FloatingLabel controlId="confirmPassword" label="Confirm Password" className="mb-3">
+            <FloatingLabel controlId="confirmPassword" className="mb-3">
               <Form.Control
                 type="password"
                 name="confirmPassword"
