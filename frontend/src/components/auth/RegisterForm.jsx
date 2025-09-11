@@ -103,7 +103,7 @@ const RegisterForm = () => {
           <Row className="g-4">
             {/* Row 1 */}
             <Col md={3}>
-              <FloatingLabel controlId="forceNumber" label="Force Number" className="mb-2">
+              <FloatingLabel controlId="forceNumber"  className="mb-2">
                 <Form.Control
                   type="text"
                   name="forceNumber"
@@ -128,7 +128,7 @@ const RegisterForm = () => {
             </Col>
   
             <Col md={3}>
-              <FloatingLabel controlId="surname" label="Surname" className="mb-2">
+              <FloatingLabel controlId="surname"  className="mb-2">
                 <Form.Control
                   type="text"
                   name="surname"
@@ -143,7 +143,7 @@ const RegisterForm = () => {
   
             {/* Row 2 */}
             <Col md={3}>
-              <FloatingLabel controlId="cellphone" label="Cellphone" className="mb-2">
+              <FloatingLabel controlId="cellphone"  className="mb-2">
                 <Form.Control
                   type="tel"
                   name="cellphone"
@@ -157,7 +157,7 @@ const RegisterForm = () => {
             </Col>
   
             <Col md={3}>
-              <FloatingLabel controlId="rank" label="Rank" className="mb-2">
+              <FloatingLabel controlId="rank"  className="mb-2">
                 <Form.Select
                   name="rank"
                   value={formData.rank}
@@ -176,7 +176,7 @@ const RegisterForm = () => {
   
             {/* Row 3 */}
             <Col md={3}>
-              <FloatingLabel controlId="idNumber" label="ID Number" className="mb-2">
+              <FloatingLabel controlId="idNumber"  className="mb-2">
                 <Form.Control
                   type="text"
                   name="idNumber"
@@ -190,7 +190,7 @@ const RegisterForm = () => {
             </Col>
   
             <Col md={3}>
-              <FloatingLabel controlId="unit" label="Unit" className="mb-2">
+              <FloatingLabel controlId="unit"  className="mb-2">
                 <Form.Select
                   name="unit"
                   value={formData.unit}
@@ -209,7 +209,7 @@ const RegisterForm = () => {
   
             {/* Row 4 */}
             <Col md={3}>
-              <FloatingLabel controlId="firstName" label="First Name(s)" className="mb-2">
+              <FloatingLabel controlId="firstName"  className="mb-2">
                 <Form.Control
                   type="text"
                   name="firstName"
@@ -223,7 +223,7 @@ const RegisterForm = () => {
             </Col>
   
             <Col md={3}>
-              <FloatingLabel controlId="email" label="Email" className="mb-2">
+              <FloatingLabel controlId="email"  className="mb-2">
                 <Form.Control
                   type="email"
                   name="email"
@@ -238,7 +238,7 @@ const RegisterForm = () => {
   
             {/* Row 5 */}
             <Col md={3}>
-              <FloatingLabel controlId="workTel" label="Work Telephone" className="mb-2">
+              <FloatingLabel controlId="workTel"  className="mb-2">
                 <Form.Control
                   type="tel"
                   name="workTel"
@@ -252,7 +252,7 @@ const RegisterForm = () => {
             </Col>
   
             <Col md={3}>
-              <FloatingLabel controlId="mustering" label="Mustering" className="mb-2">
+              <FloatingLabel controlId="mustering"  className="mb-2">
                 <Form.Select
                   name="mustering"
                   value={formData.mustering}
@@ -270,7 +270,7 @@ const RegisterForm = () => {
             </Col>
   
             {/* Row 6 */}
-            <Col md={4}>
+            <Col md={3}>
               <FloatingLabel controlId="department" label="Department" className="mb-2">
                 <Form.Select
                   name="department"
@@ -287,7 +287,7 @@ const RegisterForm = () => {
               </FloatingLabel>
             </Col>
   
-            <Col md={6}>
+            <Col md={3}>
               <FloatingLabel controlId="securityClearance" label="Security Clearance" className="mb-2">
                 <Form.Control
                   type="text"
