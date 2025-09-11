@@ -107,7 +107,6 @@ const RegisterForm = () => {
                 <Form.Control
                   type="text"
                   name="forceNumber"
-                  placeholder="Force Number"
                   value={formData.forceNumber}
                   onChange={(e) => {
                     const value = e.target.value.toUpperCase();
@@ -133,7 +132,6 @@ const RegisterForm = () => {
                 <Form.Control
                   type="text"
                   name="surname"
-                  placeholder="Surname"
                   value={formData.surname}
                   onChange={handleChange}
                   required
@@ -149,7 +147,6 @@ const RegisterForm = () => {
                 <Form.Control
                   type="tel"
                   name="cellphone"
-                  placeholder="Cellphone"
                   value={formData.cellphone}
                   onChange={handleChange}
                   required
@@ -183,7 +180,6 @@ const RegisterForm = () => {
                 <Form.Control
                   type="text"
                   name="idNumber"
-                  placeholder="ID Number"
                   value={formData.idNumber}
                   onChange={handleChange}
                   required
@@ -217,7 +213,6 @@ const RegisterForm = () => {
                 <Form.Control
                   type="text"
                   name="firstName"
-                  placeholder="First Name(s)"
                   value={formData.firstName}
                   onChange={handleChange}
                   required
@@ -232,7 +227,6 @@ const RegisterForm = () => {
                 <Form.Control
                   type="email"
                   name="email"
-                  placeholder="Email"
                   value={formData.email}
                   onChange={handleChange}
                   required
@@ -248,7 +242,6 @@ const RegisterForm = () => {
                 <Form.Control
                   type="tel"
                   name="workTel"
-                  placeholder="Work Telephone"
                   value={formData.workTel}
                   onChange={handleChange}
                   required
@@ -299,7 +292,6 @@ const RegisterForm = () => {
                 <Form.Control
                   type="text"
                   name="securityClearance"
-                  placeholder="Security Clearance"
                   value={formData.securityClearance}
                   onChange={handleChange}
                   className="auth-input"
