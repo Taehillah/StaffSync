@@ -142,13 +142,14 @@ body {
 /* Compact variant used by Login only */
 .auth-card--compact {
   max-width: 420px;
-  padding: 22px 20px;
+  /* Add a bit more inner spacing so inputs/button are away from the border */
+  padding: 26px 24px;
 }
 .auth-card--compact .auth-crest img { height: 36px; }
 .auth-card--compact .auth-title { font-size: 1.45rem; margin-top: 4px; }
 .auth-card--compact .auth-subtitle { font-size: 0.95rem; margin-bottom: 12px; }
 .auth-card--compact .form-control,
-.auth-card--compact .form-select { height: 40px; padding: 8px 12px; font-size: 0.95rem; }
+.auth-card--compact .form-select { height: 32px; padding: 6px 10px; font-size: 0.95rem; }
 .auth-card--compact .btn-auth { padding: 8px 12px; font-size: 0.95rem; }
 .auth-card--compact .auth-help { font-size: 11px; }
 

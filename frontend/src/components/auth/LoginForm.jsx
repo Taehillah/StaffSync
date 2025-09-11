@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Navigate, Link } from "react-router-dom";
-import { Form, Button, FloatingLabel, Alert, Spinner } from "react-bootstrap";
+import { Form, Button, Alert, Spinner } from "react-bootstrap";
 import { FaLock, FaEnvelope, FaSignInAlt } from "react-icons/fa";
 import { useAuth } from "../../stores/authStore";
 import crest from "../../assets/images/saafGold.png";
@@ -51,34 +51,27 @@ export default function LoginForm() {
         {error && <Alert variant="danger" className="py-2">{error}</Alert>}
 
         <Form onSubmit={handleSubmit} className="auth-form">
-          <FloatingLabel
-            controlId="email"
-            label="Email address"
-             className="mb-4 text-white"
-          >
+          <Form.Group controlId="email" className="mb-3">
+            <Form.Label className="text-white">Email address</Form.Label>
             <Form.Control
               type="email"
-              placeholder=" "
+              placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               className="auth-input"
-              
             />
             <div className="auth-help">
               <FaEnvelope className="me-1" />
               Enter your registered ICENET email
             </div>
-          </FloatingLabel>
+          </Form.Group>
 
-          <FloatingLabel
-            controlId="password"
-            label="Password"
-            className="mb-4 text-white"
-          >
+          <Form.Group controlId="password" className="mb-4">
+            <Form.Label className="text-white">Password</Form.Label>
             <Form.Control
               type="password"
-              placeholder=" "
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -89,7 +82,7 @@ export default function LoginForm() {
               <FaLock className="me-1" />
               At least 12 characters
             </div>
-          </FloatingLabel>
+          </Form.Group>
 
           <Button
             type="submit"
