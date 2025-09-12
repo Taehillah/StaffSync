@@ -426,6 +426,7 @@
   border-radius: 12px;
   overflow: hidden;
 }
+.mustering-stats-table + .btn-group { margin-top: 8px; }
 .mst-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 2fr; gap: 12px; align-items: center; padding: 10px 12px; }
 .mst-header { background: rgba(255,255,255,0.06); font-weight: 700; color: rgba(255,255,255,0.95); }
 .mst-row + .mst-row { border-top: 1px solid rgba(255,255,255,0.08); }

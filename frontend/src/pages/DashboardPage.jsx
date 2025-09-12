@@ -142,25 +142,12 @@ function SidebarNavigation({ active, onNavigate }) {
   );
 }
 
-function MusteringPanel({ rows }) {
-  // normalize helper: get member's mustering code and name
-  const norm = (p) => ({
-    code: p.musteringCode || p.mustering_code || (p.musteringName ? p.musteringName.slice(0,2).toUpperCase() : undefined),
-    name: p.musteringName || p.mustering || p.mustering_code || "Unknown"
-  });
+function MusteringPanel({ rows, onRowsChange }) {
 
   const musterings = mockMusterings || [];
 
-  // Build counts per mustering code
-  const countsByCode = rows.reduce((acc, p) => {
-    const { code } = norm(p);
-    if (!code) return acc;
-    acc[code] = (acc[code] || 0) + 1;
-    return acc;
-  }, {});
-
-  const [selected, setSelected] = useState(musterings[0]?.code || null);
   const [selectedPosts, setSelectedPosts] = useState({}); // per-mustering post filter
+  const [qa, setQa] = useState({ action: null, open: false, code: '', post: 'All', readiness: 'Ready', newPost: '' });
 
   // No per-mustering members list on this page (removed by request)
 
@@ -188,21 +175,14 @@ function MusteringPanel({ rows }) {
     <div id="mustering" className="glass-card">
       <h4><FaClipboardList className="me-2" />Musterings</h4>
 
+      {/* Quick Actions for Mustering */}
       <div className="d-flex flex-wrap gap-2 mb-3">
-        {musterings.map((m) => (
-          <button
-            key={m.code}
-            className={`btn btn-sm ${selected === m.code ? "btn-primary" : "btn-outline-light"}`}
-            onClick={() => setSelected(m.code)}
-            title={m.description}
-          >
-            {m.name} <span className="ms-1 badge bg-secondary">{countsByCode[m.code] || 0}</span>
-          </button>
-        ))}
+        <Button size="sm" variant="primary" onClick={() => setQa({ action: 'shortlist', open: true, code: qa.code || (musterings[0]?.code || ''), post: 'All', readiness: 'Ready', newPost: '' })}>Deployment Shortlist</Button>
+        <Button size="sm" variant="outline-light" onClick={() => setQa({ action: 'bulkReady', open: true, code: qa.code || (musterings[0]?.code || ''), post: 'All', readiness: 'Ready', newPost: '' })}>Bulk Update Readiness</Button>
+        <Button size="sm" variant="outline-light" onClick={() => setQa({ action: 'assignPost', open: true, code: qa.code || (musterings[0]?.code || ''), post: 'All', readiness: 'Ready', newPost: '' })}>Assign Posts</Button>
       </div>
 
       {/* Stats across all musterings */}
-      <h6 className="text-white-50 mb-2">Stats</h6>
       <div className="mustering-stats-table mb-3">
         <div className="mst-row mst-header">
           <div className="mst-col name">Mustering</div>
@@ -243,6 +223,93 @@ function MusteringPanel({ rows }) {
           );
         })}
       </div>
+
+      {/* Quick Actions Modal */}
+      <Modal show={qa.open} onHide={() => setQa(prev => ({ ...prev, open: false }))} centered>
+        <Modal.Header closeButton><Modal.Title>
+          {qa.action === 'shortlist' && 'Create Deployment Shortlist'}
+          {qa.action === 'bulkReady' && 'Bulk Update Readiness'}
+          {qa.action === 'assignPost' && 'Assign/Change Posts'}
+        </Modal.Title></Modal.Header>
+        <Modal.Body>
+          <div className="row g-2">
+            <div className="col-md-6">
+              <Form.Label className="text-white-50">Mustering</Form.Label>
+              <Form.Select className="auth-input" value={qa.code} onChange={e => setQa(prev => ({ ...prev, code: e.target.value }))}>
+                {musterings.map(m => (<option key={m.code} value={m.code}>{m.name}</option>))}
+              </Form.Select>
+            </div>
+            <div className="col-md-6">
+              <Form.Label className="text-white-50">Post</Form.Label>
+              <Form.Select className="auth-input" value={qa.post} onChange={e => setQa(prev => ({ ...prev, post: e.target.value }))}>
+                <option>All</option>
+                {(statsByMustering[qa.code]?.posts || []).map(p => (<option key={p} value={p}>{p}</option>))}
+              </Form.Select>
+            </div>
+
+            {qa.action === 'bulkReady' && (
+              <div className="col-12">
+                <Form.Label className="text-white-50">Set Readiness</Form.Label>
+                <Form.Select className="auth-input" value={qa.readiness} onChange={e => setQa(prev => ({ ...prev, readiness: e.target.value }))}>
+                  <option value="Ready">Ready</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Not Ready">Not Ready</option>
+                </Form.Select>
+              </div>
+            )}
+
+            {qa.action === 'assignPost' && (
+              <div className="col-12">
+                <Form.Label className="text-white-50">New Post</Form.Label>
+                <Form.Control className="auth-input" placeholder="e.g. Storeman" value={qa.newPost} onChange={e => setQa(prev => ({ ...prev, newPost: e.target.value }))} />
+              </div>
+            )}
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setQa(prev => ({ ...prev, open: false }))}>Cancel</Button>
+          {qa.action === 'shortlist' && (
+            <Button variant="primary" onClick={() => {
+              const list = rows.filter(p => {
+                const code = p.musteringCode || p.mustering_code;
+                if (code !== qa.code) return false;
+                if (qa.post !== 'All' && p.post_description !== qa.post) return false;
+                const ready = String(p.readinessStatus).toLowerCase() === 'ready';
+                return ready && p.is_deployable === true;
+              });
+              exportPersonnelToCSV(list, `shortlist_${qa.code}.csv`);
+              setQa(prev => ({ ...prev, open: false }));
+            }}>Export Shortlist</Button>
+          )}
+          {qa.action === 'bulkReady' && (
+            <Button variant="success" onClick={() => {
+              if (!onRowsChange) return setQa(prev => ({ ...prev, open: false }));
+              onRowsChange(rows.map(p => {
+                const code = p.musteringCode || p.mustering_code;
+                if (code !== qa.code) return p;
+                if (qa.post !== 'All' && p.post_description !== qa.post) return p;
+                return { ...p, readinessStatus: qa.readiness };
+              }));
+              setQa(prev => ({ ...prev, open: false }));
+              alert('Readiness updated');
+            }}>Apply</Button>
+          )}
+          {qa.action === 'assignPost' && (
+            <Button variant="success" onClick={() => {
+              if (!qa.newPost) { alert('Enter new post'); return; }
+              if (!onRowsChange) return setQa(prev => ({ ...prev, open: false }));
+              onRowsChange(rows.map(p => {
+                const code = p.musteringCode || p.mustering_code;
+                if (code !== qa.code) return p;
+                if (qa.post !== 'All' && p.post_description !== qa.post) return p;
+                return { ...p, post_description: qa.newPost };
+              }));
+              setQa(prev => ({ ...prev, open: false }));
+              alert('Posts updated');
+            }}>Apply</Button>
+          )}
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
@@ -1249,7 +1316,7 @@ export default function DashboardPage() {
           )}
 
           {activeSection === "mustering" && (
-            <MusteringPanel rows={rows} />
+            <MusteringPanel rows={rows} onRowsChange={setRows} />
           )}
 
           {activeSection === "bases" && (
