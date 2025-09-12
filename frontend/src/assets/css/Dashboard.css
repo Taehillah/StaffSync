@@ -23,7 +23,7 @@
   background: var(--surface);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  padding: 1rem 2rem;
+  padding: 0.8rem 1.6rem;
   border-radius: 14px;
   border: 1px solid var(--border);
   box-shadow: var(--shadow-lg);
@@ -57,7 +57,7 @@
   border-radius: 14px;
   border: 1px solid var(--border);
   box-shadow: var(--shadow-lg);
-  padding: 20px;
+  padding: 16px;
   height: 100%;
   color: #fff; /* default readable text */
 }
@@ -68,7 +68,7 @@
   -webkit-backdrop-filter: blur(8px);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  padding: 18px;
+  padding: 14px;
   transition: transform 0.2s ease, box-shadow 0.3s ease;
   color: #fff;
 }
@@ -141,7 +141,7 @@
 }
 
 .stat-icon {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   opacity: 0.8;
 }
 
@@ -281,7 +281,7 @@
 
 /* Keep the crest small (backup in case inline style is removed) */
 .dashboard-header .header-logo {
-  height: 64px !important;
+  height: 51px !important;
   width: auto !important;
   max-width: 100% !important;
   object-fit: contain;
@@ -304,13 +304,140 @@
   min-width: 72px; gap: 12px;
 }
 .chart-row .chart-value {
-  height: 34px; line-height: 34px; color: #fff; font-weight: 800;
-  font-size: 24px; letter-spacing: 0.4px;
+  height: 30px; line-height: 30px; color: #fff; font-weight: 800;
+  font-size: 19px; letter-spacing: 0.4px;
   text-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+
+/* Overview grid */
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+}
+.metric-card { grid-column: span 3; }
+.donut-card { grid-column: span 6; display: flex; flex-direction: column; }
+.sparkline-card { grid-column: span 6; }
+.table-card { grid-column: span 12; }
+.unit-list-card { grid-column: span 12; }
+.unit-card-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.unit-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.unit-header { margin-bottom: 6px; }
+.unit-name { font-weight: 600; color: #fff; max-width: 70%; }
+.unit-strength { color: rgba(255,255,255,0.85); font-weight: 700; }
+.unit-bar { height: 8px; background: rgba(255,255,255,0.08); border-radius: 6px; overflow: hidden; margin: 6px 0; }
+.unit-bar-fill { height: 100%; border-radius: 6px; transition: width 0.3s ease; }
+.unit-meta { font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 4px; }
+
+@media (max-width: 768px) {
+  .unit-card-list { grid-template-columns: 1fr; }
+}
+
+.metric-label { font-size: 11px; color: rgba(255,255,255,0.75); margin-bottom: 4px; }
+.metric-value { font-size: 22px; font-weight: 800; color: #fff; line-height: 1; }
+.metric-sub { font-size: 11px; color: rgba(255,255,255,0.6); }
+.metric-icon { font-size: 19px; opacity: 0.85; }
+
+/* Colorful variants for the small metric tiles */
+.metric-card.metric-green {
+  background: linear-gradient(135deg, rgba(46,204,113,0.2), rgba(39,174,96,0.18));
+  border-color: rgba(46,204,113,0.35);
+  box-shadow: 0 10px 28px rgba(39,174,96,0.25);
+}
+.metric-card.metric-amber {
+  background: linear-gradient(135deg, rgba(241,196,15,0.22), rgba(243,156,18,0.18));
+  border-color: rgba(241,196,15,0.35);
+  box-shadow: 0 10px 28px rgba(243,156,18,0.25);
+}
+.metric-card.metric-red {
+  background: linear-gradient(135deg, rgba(231,76,60,0.22), rgba(192,57,43,0.18));
+  border-color: rgba(231,76,60,0.35);
+  box-shadow: 0 10px 28px rgba(192,57,43,0.25);
+}
+.metric-card.metric-purple {
+  background: linear-gradient(135deg, rgba(155,89,182,0.22), rgba(142,68,173,0.18));
+  border-color: rgba(155,89,182,0.35);
+  box-shadow: 0 10px 28px rgba(142,68,173,0.25);
+}
+
+.legend { display: flex; flex-direction: column; gap: 8px; padding: 8px 0 0 8px; }
+.legend-item { display: flex; align-items: center; gap: 8px; color: #fff; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+@media (max-width: 1200px) {
+  .metric-card { grid-column: span 6; }
+  .donut-card { grid-column: span 12; }
+  .sparkline-card { grid-column: span 12; }
+}
+
+@media (max-width: 576px) {
+  .overview-grid { grid-template-columns: repeat(6, 1fr); }
+  .metric-card { grid-column: span 3; }
 }
 
 /* Section headings inside cards */
 .glass-card > h4 { margin-bottom: 12px; font-weight: 800; letter-spacing: 0.2px; }
+
+/* ─── Members' Stats list (Mustering panel) ─────────────────────────────── */
+.member-stats {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.member-header, .member-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+}
+.member-header {
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.85);
+  font-weight: 600;
+}
+.member-row { border-top: 1px solid rgba(255,255,255,0.08); }
+.member-col { color: #fff; }
+.member-col.name { flex: 2; display: flex; align-items: center; gap: 10px; }
+.member-col.readiness { flex: 1; }
+.member-col.unit { flex: 1; color: rgba(255,255,255,0.85); }
+.member-col.base { flex: 1; color: rgba(255,255,255,0.85); }
+.member-col.deployable { flex: 0 0 110px; color: rgba(255,255,255,0.9); }
+.member-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 800; font-size: 12px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+}
+.member-name .title { font-weight: 600; color: #fff; line-height: 1.1; }
+.member-name .sub { font-size: 11px; color: rgba(255,255,255,0.65); }
+
+/* ─── Mustering Stats table (summary across musterings) ─────────────────── */
+.mustering-stats-table {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.mst-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 2fr; gap: 12px; align-items: center; padding: 10px 12px; }
+.mst-header { background: rgba(255,255,255,0.06); font-weight: 700; color: rgba(255,255,255,0.95); }
+.mst-row + .mst-row { border-top: 1px solid rgba(255,255,255,0.08); }
+.mst-col { color: #fff; }
+.mst-col.name { display: flex; align-items: center; gap: 10px; }
+.mst-badge { width: 32px; height: 32px; border-radius: 50%; background: #2ecc71; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
+.mst-title { font-weight: 700; color: #fff; }
+.mst-col.chart { justify-self: end; }
+
+@media (max-width: 768px) {
+  .mst-row { grid-template-columns: 1.6fr 1fr 0.8fr 0.8fr 1.8fr; }
+}
 
 /* ─── Form controls: match auth glass effect ─────────────────────────────── */
 .glass-panel .form-control,
@@ -350,3 +477,10 @@
     grid-column: 1 / -1;
   }
 }
+
+/* ─── 80% visual scale overrides ───────────────────────────────────────── */
+.dashboard-container { font-size: 0.8rem; gap: 20px; }
+.dashboard-header h2 { font-size: 1.6rem; }
+.sidebar-nav .nav-link { padding: 8px 10px; }
+.sidebar-nav .nav-icon { font-size: 0.95em; }
+.table { font-size: 0.9em; }

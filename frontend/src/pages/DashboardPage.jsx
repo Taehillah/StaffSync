@@ -4,7 +4,8 @@ import {
 } from "react-bootstrap";
 import {
   FaSignOutAlt, FaBell, FaUserCircle, FaClipboardList, FaUsers, FaMapMarkedAlt,
-  FaTasks, FaBolt, FaSearch, FaFilter, FaFileExport, FaServer
+  FaTasks, FaBolt, FaSearch, FaFilter, FaFileExport, FaServer,
+  FaHourglassHalf, FaExclamationTriangle, FaPlane, FaLayerGroup
 } from "react-icons/fa";
 import { GiRank3, GiCompass, GiSwordWound } from "react-icons/gi";
 import defaultProfile from "../assets/images/default-profile.png";
@@ -131,7 +132,8 @@ function SidebarNavigation({ active, onNavigate }) {
   );
   return (
     <ul className="sidebar-nav glass-card">
-      {item("personnel", "Personnel Overview", GiCompass)}
+      {item("overview", "Overview", GiCompass)}
+      {item("personnel", "Personnel", GiCompass)}
       {item("mustering", "Mustering", FaClipboardList)}
       {item("bases", "Bases", FaMapMarkedAlt)}
       {item("units", "Units", FaUsers)}
@@ -158,27 +160,29 @@ function MusteringPanel({ rows }) {
   }, {});
 
   const [selected, setSelected] = useState(musterings[0]?.code || null);
+  const [selectedPosts, setSelectedPosts] = useState({}); // per-mustering post filter
 
-  const membersForSelected = useMemo(() => {
-    if (!selected) return [];
-    return rows.filter((p) => {
-      const c = p.musteringCode || p.mustering_code || (p.musteringName ? p.musteringName.slice(0,2).toUpperCase() : undefined);
-      return c === selected;
-    });
-  }, [rows, selected]);
+  // No per-mustering members list on this page (removed by request)
 
-  // Group by rank for a simple chart
-  const rankCounts = useMemo(() => {
+  // Aggregate per mustering for the Stats table
+  const statsByMustering = useMemo(() => {
     const by = {};
-    for (const p of membersForSelected) {
-      const r = p.rank || "Unknown";
-      by[r] = (by[r] || 0) + 1;
+    for (const p of rows) {
+      const code = p.musteringCode || p.mustering_code || (p.musteringName ? p.musteringName.slice(0,2).toUpperCase() : undefined);
+      if (!code) continue;
+      if (!by[code]) by[code] = { total: 0, deployable: 0, posts: new Set(), readiness: { Ready: 0, Pending: 0, 'Not Ready': 0 } };
+      by[code].total++;
+      if (p.is_deployable) by[code].deployable++;
+      if (p.post_description) by[code].posts.add(p.post_description);
+      const st = (p.readinessStatus || '').toString();
+      if (by[code].readiness[st] !== undefined) by[code].readiness[st]++; else by[code].readiness[st] = 1;
     }
-    // Convert to sorted entries (desc)
-    return Object.entries(by).sort((a,b) => b[1]-a[1]);
-  }, [membersForSelected]);
+    // finalize
+    for (const k of Object.keys(by)) by[k].posts = Array.from(by[k].posts).sort();
+    return by;
+  }, [rows]);
 
-  const maxVal = Math.max(1, ...rankCounts.map(([,v]) => v));
+  // Avatar helper removed together with members list
 
   return (
     <div id="mustering" className="glass-card">
@@ -197,52 +201,48 @@ function MusteringPanel({ rows }) {
         ))}
       </div>
 
-      {selected && (
-        <div>
-          <h6 className="text-white-50 mb-2">Rank distribution in {musterings.find(m=>m.code===selected)?.name || selected}</h6>
-          {/* Chart + big numbers column */}
-          <div className="mb-2 chart-row" style={{width: '100%', overflowX: 'auto'}}>
-            <div className="chart-svg">
-              {(() => {
-                const BAR_H = 26; const ROW_H = 34; const labelY = Math.round(BAR_H/2 + 6);
-                const chartH = Math.max(120, rankCounts.length * ROW_H);
-                const CHART_W = 800; const MARGIN = 0; const INNER_W = CHART_W;
-                return (
-                  <svg width="100%" height={chartH} viewBox={`0 0 ${CHART_W} ${chartH}`} preserveAspectRatio="xMinYMid meet">
-                    <defs>
-                      <linearGradient id="gradBlueRanks" x1="0" x2="1" y1="0" y2="0">
-                        <stop offset="0%" stopColor="#64b5f6"/>
-                        <stop offset="100%" stopColor="#2196f3"/>
-                      </linearGradient>
-                      <filter id="barShadow1" x="-10%" y="-50%" width="120%" height="200%">
-                        <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#000" floodOpacity="0.35"/>
-                      </filter>
-                    </defs>
-                    {rankCounts.map(([label, value], idx) => {
-                      const y = idx * ROW_H + MARGIN;
-                      const w = INNER_W * (value / maxVal);
-                      return (
-                        <g key={label} transform={`translate(${MARGIN}, ${y})`}>
-                          <rect x="0" y="0" width={w} height={BAR_H} fill="#2196f3" rx="6" filter="url(#barShadow1)" style={{ transition: 'width 600ms ease' }} />
-                          <text x={4} y={labelY} fill="#fff" fontSize="12" textAnchor="start">{label}</text>
-                          <title>{`${label}: ${value}`}</title>
-                        </g>
-                      );
-                    })}
-                  </svg>
-                );
-              })()}
-            </div>
-            <div className="chart-values">
-              {rankCounts.map(([, value], idx) => (
-                <div key={idx} className="chart-value">{value}</div>
-              ))}
-            </div>
-          </div>
-
-          <div className="text-muted small">Total members: {membersForSelected.length}</div>
+      {/* Stats across all musterings */}
+      <h6 className="text-white-50 mb-2">Stats</h6>
+      <div className="mustering-stats-table mb-3">
+        <div className="mst-row mst-header">
+          <div className="mst-col name">Mustering</div>
+          <div className="mst-col posts">Posts</div>
+          <div className="mst-col deploy">Deployable</div>
+          <div className="mst-col total">Total Members</div>
+          <div className="mst-col chart">Combat Readiness over Time</div>
         </div>
-      )}
+        {musterings.map(m => {
+          const code = m.code;
+          const s = statsByMustering[code] || { total: 0, deployable: 0, posts: [], readiness: { Ready: 0, Pending: 0, 'Not Ready': 0 } };
+          const postSel = selectedPosts[code] || 'All';
+          // filter counts by selected post if not All
+          const filteredMembers = postSel === 'All' ? rows.filter(p => (p.musteringCode || p.mustering_code) === code)
+            : rows.filter(p => (p.musteringCode || p.mustering_code) === code && p.post_description === postSel);
+          const deployable = filteredMembers.filter(p => p.is_deployable).length;
+          const total = filteredMembers.length;
+          const ready = filteredMembers.filter(p => String(p.readinessStatus).toLowerCase() === 'ready').length;
+          const pending = filteredMembers.filter(p => String(p.readinessStatus).toLowerCase() === 'pending').length;
+          const notReady = filteredMembers.filter(p => String(p.readinessStatus).toLowerCase() === 'not ready').length;
+          const trend = [ready, ready + Math.round(pending/2), ready + pending, Math.max(ready - Math.round(notReady/3), 0), Math.max(ready - Math.round(notReady/4) + Math.round(pending/3), 0)];
+          return (
+            <div key={code} className="mst-row">
+              <div className="mst-col name">
+                <div className="mst-badge">{m.name?.[0] || code}</div>
+                <div className="mst-title">{m.name}</div>
+              </div>
+              <div className="mst-col posts">
+                <Form.Select size="sm" value={postSel} onChange={e => setSelectedPosts(prev => ({ ...prev, [code]: e.target.value }))} className="auth-input">
+                  <option>All</option>
+                  {s.posts.map(p => (<option key={p} value={p}>{p}</option>))}
+                </Form.Select>
+              </div>
+              <div className="mst-col deploy">{deployable}</div>
+              <div className="mst-col total">{total}</div>
+              <div className="mst-col chart"><Sparkline data={trend} width={220} height={50} color="#1e90ff" /></div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -812,7 +812,12 @@ function PersonnelOverview({ rows, onOpen, searchTerm, setSearchTerm, activeFilt
 
   return (
     <div id="personnel" className="glass-card">
-      <h4><FaUsers className="me-2" />Personnel Overview</h4>
+      <div className="d-flex justify-content-between align-items-center">
+        <h4 className="mb-0"><FaUsers className="me-2" />Personnel</h4>
+        <Button variant="outline-light" size="sm" onClick={() => {}}>
+          Overview
+        </Button>
+      </div>
 
       <InputGroup className="mb-3">
         <InputGroup.Text><FaSearch /></InputGroup.Text>
@@ -917,11 +922,210 @@ function SystemStatusPanel() {
   );
 }
 
+function DonutChart({ size = 160, thickness = 14, segments = [], label, sublabel }) {
+  const radius = (size / 2) - (thickness / 2);
+  const circumference = 2 * Math.PI * radius;
+  const total = segments.reduce((s, x) => s + x.value, 0) || 1;
+  let acc = 0;
+  return (
+    <div className="donut-chart">
+      <svg width={size} height={size} className="chart-svg">
+        <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
+          {segments.map((seg, i) => {
+            const p = seg.value / total;
+            const dash = p * circumference;
+            const gap = circumference - dash;
+            const offset = -acc * circumference;
+            acc += p;
+            return (
+              <circle
+                key={i}
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                fill="transparent"
+                stroke={seg.color}
+                strokeWidth={thickness}
+                strokeDasharray={`${dash} ${gap}`}
+                strokeDashoffset={offset}
+                strokeLinecap="round"
+              />
+            );
+          })}
+          {/* track */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="transparent"
+            stroke="rgba(255,255,255,0.08)"
+            strokeWidth={thickness}
+          />
+        </g>
+        <text x="50%" y="48%" dominantBaseline="middle" textAnchor="middle" fill="#fff" fontSize="22" fontWeight="800">
+          {label}
+        </text>
+        {sublabel && (
+          <text x="50%" y="62%" dominantBaseline="middle" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="12">
+            {sublabel}
+          </text>
+        )}
+      </svg>
+    </div>
+  );
+}
+
+function Sparkline({ data = [], width = 280, height = 80, color = '#4cafef' }) {
+  if (!data.length) data = [0];
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const dx = width / Math.max(1, data.length - 1);
+  const norm = (v) => {
+    if (max === min) return height / 2;
+    return height - ((v - min) / (max - min)) * height;
+  };
+  const d = data.map((v, i) => `${i === 0 ? 'M' : 'L'} ${i * dx} ${norm(v)}`).join(' ');
+  const area = `${d} L ${width} ${height} L 0 ${height} Z`;
+  return (
+    <svg width={width} height={height} className="chart-svg">
+      <path d={area} fill={color + '33'} />
+      <path d={d} stroke={color} strokeWidth="2" fill="none" />
+    </svg>
+  );
+}
+
+function OverviewPanel({ rows }) {
+  const total = rows.length;
+  const ready = rows.filter(r => String(r.readinessStatus).toLowerCase() === 'ready').length;
+  const pending = rows.filter(r => String(r.readinessStatus).toLowerCase() === 'pending').length;
+  const notReady = rows.filter(r => String(r.readinessStatus).toLowerCase() === 'not ready').length;
+  const readyPct = total ? Math.round((ready / total) * 100) : 0;
+  const deployable = rows.filter(r => r.is_deployable === true).length;
+  const activeMusterings = new Set(rows.map(r => r.musteringCode).filter(Boolean)).size;
+
+  // counts by base and by unit
+  const countsBy = (key) => rows.reduce((acc, r) => { const k = r[key]; if (!k) return acc; acc[k] = (acc[k] || 0) + 1; return acc; }, {});
+  const readyBy = (key) => rows.reduce((acc, r) => { const k = r[key]; if (!k) return acc; if (!acc[k]) acc[k] = { total: 0, ready: 0 }; acc[k].total++; if (String(r.readinessStatus).toLowerCase() === 'ready') acc[k].ready++; return acc; }, {});
+  const baseCounts = countsBy('baseName');
+  const unitStats = readyBy('unitName');
+  const topUnits = Object.entries(unitStats)
+    .map(([name, v]) => ({ name, total: v.total, readyPct: v.total ? Math.round((v.ready / v.total) * 100) : 0 }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 6);
+
+  const sparkData = Object.values(baseCounts);
+
+  return (
+    <div className="overview-grid">
+      {/* Colorful metric tiles (alternate summaries) */}
+      <div className="glass-card metric-card metric-amber">
+        <div className="d-flex justify-content-between align-items-center">
+          <div>
+            <div className="metric-label">Pending Readiness</div>
+            <div className="metric-value">{pending}</div>
+            <div className="metric-sub">Awaiting clearance</div>
+          </div>
+          <FaHourglassHalf className="metric-icon" />
+        </div>
+      </div>
+      <div className="glass-card metric-card metric-red">
+        <div className="d-flex justify-content-between align-items-center">
+          <div>
+            <div className="metric-label">Not Ready</div>
+            <div className="metric-value">{notReady}</div>
+            <div className="metric-sub">Requires action</div>
+          </div>
+          <FaExclamationTriangle className="metric-icon" />
+        </div>
+      </div>
+      <div className="glass-card metric-card metric-green">
+        <div className="d-flex justify-content-between align-items-center">
+          <div>
+            <div className="metric-label">Deployable</div>
+            <div className="metric-value">{deployable}</div>
+            <div className="metric-sub">Available for deployment</div>
+          </div>
+          <FaPlane className="metric-icon" />
+        </div>
+      </div>
+      <div className="glass-card metric-card metric-purple">
+        <div className="d-flex justify-content-between align-items-center">
+          <div>
+            <div className="metric-label">Active Musterings</div>
+            <div className="metric-value">{activeMusterings}</div>
+            <div className="metric-sub">Specializations</div>
+          </div>
+          <FaLayerGroup className="metric-icon" />
+        </div>
+      </div>
+
+      {/* Donut + legend */}
+      <div className="glass-card donut-card">
+        <h4 className="mb-3"><FaBolt className="me-2" />Readiness Overview</h4>
+        <div className="chart-row">
+          <DonutChart
+            size={180}
+            thickness={16}
+            label={`${readyPct}%`}
+            sublabel="Ready"
+            segments={[
+              { value: ready, color: '#2ecc71' },
+              { value: pending, color: '#f1c40f' },
+              { value: notReady, color: '#e74c3c' },
+            ]}
+          />
+          <div className="legend">
+            <div className="legend-item"><span className="legend-dot" style={{ background: '#2ecc71' }}></span> Ready: {ready}</div>
+            <div className="legend-item"><span className="legend-dot" style={{ background: '#f1c40f' }}></span> Pending: {pending}</div>
+            <div className="legend-item"><span className="legend-dot" style={{ background: '#e74c3c' }}></span> Not Ready: {notReady}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sparkline card */}
+      <div className="glass-card sparkline-card">
+        <h4 className="mb-3"><GiCompass className="me-2" />Strength by Base</h4>
+        <Sparkline data={sparkData} width={320} height={96} color="#1e90ff" />
+      </div>
+
+      {/* Top units as cards with readiness bar */}
+      <div className="glass-card unit-list-card">
+        <h4 className="mb-3"><FaUsers className="me-2" />Top Units</h4>
+        {topUnits.length === 0 ? (
+          <div className="text-center text-muted">No data</div>
+        ) : (
+          <div className="unit-card-list">
+            {topUnits.map((u) => {
+              const barColor = u.readyPct >= 75 ? '#2ecc71' : u.readyPct >= 50 ? '#f1c40f' : '#e74c3c';
+              return (
+                <div className="unit-card" key={u.name}>
+                  <div className="d-flex justify-content-between align-items-center unit-header">
+                    <div className="unit-name text-truncate" title={u.name}>{u.name}</div>
+                    <div className="unit-strength">{u.total}</div>
+                  </div>
+                  <div className="unit-bar">
+                    <div className="unit-bar-fill" style={{ width: `${u.readyPct}%`, background: barColor }} />
+                  </div>
+                  <div className="d-flex justify-content-between unit-meta">
+                    <span className="text-muted">Readiness</span>
+                    <Badge bg={u.readyPct >= 75 ? 'success' : u.readyPct >= 50 ? 'warning' : 'danger'}>{u.readyPct}%</Badge>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user, logout, isLoading, updateProfile } = useAuth();
   const [profilePic, setProfilePic] = useState(null);
   const [activeFilters, setActiveFilters] = useState({ mustering: [], rank: [], readiness: [] });
-  const [activeSection, setActiveSection] = useState("personnel");
+  // Default landing tab should be Overview
+  const [activeSection, setActiveSection] = useState("overview");
 
   const [rows, setRows] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -971,7 +1175,7 @@ export default function DashboardPage() {
       <header className="dashboard-header">
         <div className="d-flex justify-content-between align-items-center">
           <div className="d-flex align-items-center">
-            <img src={saafGold} alt="SAAF Logo" className="header-logo" style={{ height: 64, width: "auto", maxWidth: "100%" }}/>
+            <img src={saafGold} alt="SAAF Logo" className="header-logo" style={{ height: 51, width: "auto", maxWidth: "100%" }}/>
             <h2 className="ms-2 mb-0">STAFFSYNC DASHBOARD</h2>
           </div>
           <div className="d-flex align-items-center gap-3">
@@ -1023,6 +1227,12 @@ export default function DashboardPage() {
       {/* main column */}
       <main className="dashboard-main">
         <div className="glass-panel">
+          {activeSection === "overview" && (
+            <>
+              <OverviewPanel rows={rows} />
+            </>
+          )}
+
           {activeSection === "personnel" && (
             <>
               <PersonnelOverview
@@ -1035,7 +1245,6 @@ export default function DashboardPage() {
                 pageSize={pageSize}
                 setPage={setPage}
               />
-              <RecentActivities />
             </>
           )}
 
@@ -1067,7 +1276,6 @@ export default function DashboardPage() {
             canExport={rows.length > 0}
           />
           <NotificationsPanel />
-          <SystemStatusPanel />
         </div>
       </aside>
 
