@@ -2,7 +2,8 @@
 html, body, #root { height: 100%; }
 :root {
   --bg: #0b0f14;
-  --surface: rgba(20,24,28,0.92);
+  /* Make glass surfaces globally airier */
+  --surface: rgba(20,24,28,0.80);
   --card: rgba(255,255,255,0.06);
   --border: rgba(255,255,255,0.08);
   --text: #ffffff;
