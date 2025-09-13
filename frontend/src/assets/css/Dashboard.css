@@ -440,6 +440,93 @@
   .mst-row { grid-template-columns: 1.6fr 1fr 0.8fr 0.8fr 1.8fr; }
 }
 
+/* ─── Bases Map Card ───────────────────────────────────────────────────── */
+.globe-card { overflow: hidden; }
+.globe-svg { width: 100%; height: auto; display: block; border-radius: 10px; cursor: grab; background: radial-gradient(800px 400px at 70% 0%, rgba(33,150,243,0.08), transparent 60%), #0b0f14; }
+.globe-svg.panning { cursor: grabbing; }
+.marker { cursor: pointer; }
+.marker-label { paint-order: stroke; stroke: rgba(0,0,0,0.6); stroke-width: 2px; }
+.globe-selected { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 8px 10px; }
+
+/* Google map container tweaks */
+.google-map-container { background: rgba(20,24,28,0.92); box-shadow: var(--shadow-lg); }
+.map-chip {
+  background: rgba(20,24,28,0.95);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.22);
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.2;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  display: inline-flex;
+  align-items: center;
+}
+
+.gm-dark-controls {
+  display: flex; gap: 6px; padding: 6px; border-radius: 10px;
+  background: rgba(20,24,28,0.9);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.45);
+  margin: 8px;
+}
+.gm-dark-btn {
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+.gm-dark-btn:hover { background: rgba(255,255,255,0.12); }
+
+/* Fallback banner over SVG map when Google fails */
+.map-fallback-banner {
+  position: absolute;
+  top: 8px; left: 8px;
+  background: rgba(255, 193, 7, 0.18);
+  color: #ffecb5;
+  border: 1px solid rgba(255, 193, 7, 0.35);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  z-index: 2;
+}
+
+/* Leaflet OSM custom marker styling */
+.sa-marker-wrapper { filter: drop-shadow(0 6px 16px rgba(0,0,0,0.45)); }
+.sa-marker {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #5cff95, #30d158 60%, #17a558 100%);
+  border: 2px solid #0b0f14;
+}
+
+/* Base info banner below the map */
+.base-info-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 2px solid rgba(72, 207, 173, 0.45);
+  background: linear-gradient(180deg, rgba(46, 64, 82, 0.35), rgba(20, 24, 28, 0.35));
+  box-shadow: 0 10px 28px rgba(0,0,0,0.35) inset;
+}
+.base-info-name {
+  background: linear-gradient(90deg, #26a69a, #42a5f5);
+  color: #fff;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.22);
+}
+.base-info-assets, .base-info-metric {
+  color: #e0f2f1;
+}
+.base-info-assets strong, .base-info-metric strong { font-weight: 800; color: #fff; }
+
 /* ─── Form controls: match auth glass effect ─────────────────────────────── */
 .glass-panel .form-control,
 .glass-panel .form-select,
@@ -466,6 +553,38 @@
   border: 1px solid rgba(255,255,255,0.14);
   color: #fff;
 }
+
+/* ─── Quick Actions styling (Mustering) ─────────────────────────────────── */
+.qa-bar .qa-btn {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.18) !important;
+  color: #fff !important;
+  border-radius: 10px;
+  padding: 6px 12px;
+}
+.qa-bar .qa-btn:hover { background: rgba(255,255,255,0.12) !important; }
+.qa-bar .qa-btn.qa-primary {
+  background: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 24px rgba(33,150,243,0.35);
+}
+.qa-bar .qa-btn.qa-primary:hover { filter: brightness(1.05); }
+
+/* ─── Glass modal theme (dark) ──────────────────────────────────────────── */
+.glass-modal {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  color: #fff !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.glass-modal .modal-header,
+.glass-modal .modal-body,
+.glass-modal .modal-footer { background: transparent; color: #fff; }
+.glass-modal .modal-title { color: #fff; font-weight: 800; }
+.glass-modal .btn-close { filter: invert(1) grayscale(1); opacity: 0.8; }
+.glass-modal .form-label { color: #fff; }
 
 /* Responsive: stack columns when narrow */
 @media (max-width: 1200px) {

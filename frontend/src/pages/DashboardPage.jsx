@@ -9,6 +9,8 @@ import {
 } from "react-icons/fa";
 import { GiRank3, GiCompass, GiSwordWound } from "react-icons/gi";
 import defaultProfile from "../assets/images/default-profile.png";
+import BasesGoogleMap from "../components/maps/BasesGoogleMap";
+import BasesOSMMap from "../components/maps/BasesOSMMap";
 import { useAuth } from "../stores/authStore";
 import { fetchPersonnel, exportPersonnelToCSV } from "../services/dataService";
 import { mockMusterings, mockBases, mockUnits } from "../data/mockData";
@@ -151,7 +153,7 @@ function MusteringPanel({ rows, onRowsChange }) {
 
   // No per-mustering members list on this page (removed by request)
 
-  // Aggregate per mustering for the Stats table
+  // Aggregate per mustering for the Stats table (kept for Quick Actions post list)
   const statsByMustering = useMemo(() => {
     const by = {};
     for (const p of rows) {
@@ -160,7 +162,13 @@ function MusteringPanel({ rows, onRowsChange }) {
       if (!by[code]) by[code] = { total: 0, deployable: 0, posts: new Set(), readiness: { Ready: 0, Pending: 0, 'Not Ready': 0 } };
       by[code].total++;
       if (p.is_deployable) by[code].deployable++;
-      if (p.post_description) by[code].posts.add(p.post_description);
+      if (p.post_description) {
+        String(p.post_description)
+          .split(',')
+          .map(t => t.trim())
+          .filter(Boolean)
+          .forEach(t => by[code].posts.add(t));
+      }
       const st = (p.readinessStatus || '').toString();
       if (by[code].readiness[st] !== undefined) by[code].readiness[st]++; else by[code].readiness[st] = 1;
     }
@@ -176,10 +184,9 @@ function MusteringPanel({ rows, onRowsChange }) {
       <h4><FaClipboardList className="me-2" />Musterings</h4>
 
       {/* Quick Actions for Mustering */}
-      <div className="d-flex flex-wrap gap-2 mb-3">
-        <Button size="sm" variant="primary" onClick={() => setQa({ action: 'shortlist', open: true, code: qa.code || (musterings[0]?.code || ''), post: 'All', readiness: 'Ready', newPost: '' })}>Deployment Shortlist</Button>
-        <Button size="sm" variant="outline-light" onClick={() => setQa({ action: 'bulkReady', open: true, code: qa.code || (musterings[0]?.code || ''), post: 'All', readiness: 'Ready', newPost: '' })}>Bulk Update Readiness</Button>
-        <Button size="sm" variant="outline-light" onClick={() => setQa({ action: 'assignPost', open: true, code: qa.code || (musterings[0]?.code || ''), post: 'All', readiness: 'Ready', newPost: '' })}>Assign Posts</Button>
+      <div className="d-flex flex-wrap gap-2 mb-3 qa-bar">
+        <Button size="sm" variant="outline-light" className="qa-btn qa-primary" onClick={() => setQa({ action: 'shortlist', open: true, code: qa.code || (musterings[0]?.code || ''), post: 'All', readiness: 'Ready', newPost: '' })}>Deployment Shortlist</Button>
+        <Button size="sm" variant="outline-light" className="qa-btn" onClick={() => setQa({ action: 'bulkReady', open: true, code: qa.code || (musterings[0]?.code || ''), post: 'All', readiness: 'Ready', newPost: '' })}>Bulk Update Readiness</Button>
       </div>
 
       {/* Stats across all musterings */}
@@ -196,8 +203,16 @@ function MusteringPanel({ rows, onRowsChange }) {
           const s = statsByMustering[code] || { total: 0, deployable: 0, posts: [], readiness: { Ready: 0, Pending: 0, 'Not Ready': 0 } };
           const postSel = selectedPosts[code] || 'All';
           // filter counts by selected post if not All
-          const filteredMembers = postSel === 'All' ? rows.filter(p => (p.musteringCode || p.mustering_code) === code)
-            : rows.filter(p => (p.musteringCode || p.mustering_code) === code && p.post_description === postSel);
+          const filteredMembers = rows.filter(p => {
+            const c = p.musteringCode || p.mustering_code;
+            if (c !== code) return false;
+            if (postSel === 'All') return true;
+            const tokens = String(p.post_description || '')
+              .toLowerCase()
+              .split(',')
+              .map(t => t.trim());
+            return tokens.includes(postSel.toLowerCase());
+          });
           const deployable = filteredMembers.filter(p => p.is_deployable).length;
           const total = filteredMembers.length;
           const ready = filteredMembers.filter(p => String(p.readinessStatus).toLowerCase() === 'ready').length;
@@ -225,7 +240,7 @@ function MusteringPanel({ rows, onRowsChange }) {
       </div>
 
       {/* Quick Actions Modal */}
-      <Modal show={qa.open} onHide={() => setQa(prev => ({ ...prev, open: false }))} centered>
+      <Modal show={qa.open} onHide={() => setQa(prev => ({ ...prev, open: false }))} centered dialogClassName="glass-modal-dialog" contentClassName="glass-modal">
         <Modal.Header closeButton><Modal.Title>
           {qa.action === 'shortlist' && 'Create Deployment Shortlist'}
           {qa.action === 'bulkReady' && 'Bulk Update Readiness'}
@@ -298,11 +313,25 @@ function MusteringPanel({ rows, onRowsChange }) {
             <Button variant="success" onClick={() => {
               if (!qa.newPost) { alert('Enter new post'); return; }
               if (!onRowsChange) return setQa(prev => ({ ...prev, open: false }));
+              const newLabel = qa.newPost.trim();
               onRowsChange(rows.map(p => {
                 const code = p.musteringCode || p.mustering_code;
                 if (code !== qa.code) return p;
-                if (qa.post !== 'All' && p.post_description !== qa.post) return p;
-                return { ...p, post_description: qa.newPost };
+                // when a specific post is chosen, limit to members that include it (supports multi-post strings)
+                if (qa.post !== 'All') {
+                  const tokens = String(p.post_description || '')
+                    .toLowerCase()
+                    .split(',')
+                    .map(t => t.trim());
+                  if (!tokens.includes(qa.post.toLowerCase())) return p;
+                }
+                const current = String(p.post_description || '').trim();
+                const curTokens = current
+                  ? current.split(',').map(t => t.trim()).filter(Boolean)
+                  : [];
+                const exists = curTokens.map(t => t.toLowerCase()).includes(newLabel.toLowerCase());
+                const next = exists ? current : (curTokens.length ? `${current}, ${newLabel}` : newLabel);
+                return { ...p, post_description: next };
               }));
               setQa(prev => ({ ...prev, open: false }));
               alert('Posts updated');
@@ -310,6 +339,182 @@ function MusteringPanel({ rows, onRowsChange }) {
           )}
         </Modal.Footer>
       </Modal>
+    </div>
+  );
+}
+
+// Lightweight dark "globe" map focusing on South Africa with base markers
+function BasesGlobeCard({ rows }) {
+  const bases = mockBases || [];
+  const [selected, setSelected] = useState(null);
+  const [hovered, setHovered] = useState(null);
+  const [scale, setScale] = useState(1);
+  const [tx, setTx] = useState(0);
+  const [ty, setTy] = useState(0);
+  const [panning, setPanning] = useState(false);
+  const panRef = React.useRef({ startX: 0, startY: 0, startTx: 0, startTy: 0 });
+  const svgRef = React.useRef(null);
+
+  // rough lat/lon for S.A. bases (approximate; fine for schematic map)
+  const coords = {
+    'AFB Waterkloof': { lat: -25.83, lon: 28.22 },
+    'AFB Swartkop': { lat: -25.80, lon: 28.17 },
+    'AFB Bloemspruit': { lat: -29.10, lon: 26.30 },
+    'AFB Ysterplaat': { lat: -33.90, lon: 18.50 },
+    'AFB Hoedspruit': { lat: -24.36, lon: 31.05 },
+    'AFB Langebaanweg': { lat: -32.97, lon: 18.16 },
+  };
+
+  // South Africa bounding box for projection
+  const minLat = -35, maxLat = -22; // south to north
+  const minLon = 16, maxLon = 33;   // west to east
+
+  const countsByReady = useMemo(() => {
+    const by = {};
+    for (const p of rows) {
+      const base = p.baseName || 'Unknown';
+      if (!by[base]) by[base] = { total: 0, Ready: 0, Pending: 0, 'Not Ready': 0 };
+      by[base].total++;
+      const st = String(p.readinessStatus || 'Unknown');
+      if (by[base][st] !== undefined) by[base][st]++;
+    }
+    return by;
+  }, [rows]);
+
+  const W = 640, H = 360;
+  const MARGIN = 30; // inner padding around map
+
+  const project = (lon, lat) => {
+    const x = (lon - minLon) / (maxLon - minLon);
+    const y = (lat - minLat) / (maxLat - minLat); // 0..1 bottom->top
+    const px = MARGIN + x * (W - 2 * MARGIN);
+    const py = MARGIN + (1 - y) * (H - 2 * MARGIN);
+    return { x: px, y: py };
+  };
+
+  // South Africa silhouette path (normalized 0..1 points, stylized)
+  const saPoints = [
+    [0.15, 0.75], [0.22, 0.80], [0.30, 0.84], [0.42, 0.86], [0.55, 0.83], [0.67, 0.79],
+    [0.78, 0.72], [0.86, 0.63], [0.84, 0.52], [0.81, 0.44], [0.77, 0.37], [0.70, 0.31],
+    [0.62, 0.28], [0.52, 0.26], [0.43, 0.27], [0.35, 0.31], [0.29, 0.37], [0.24, 0.46],
+    [0.21, 0.55], [0.18, 0.64], [0.15, 0.75]
+  ];
+  const saPath = saPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${MARGIN + p[0]*(W-2*MARGIN)} ${MARGIN + p[1]*(H-2*MARGIN)}`).join(' ') + ' Z';
+
+  const toSvgCoords = (evt) => {
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
+    const x = ((evt.clientX - rect.left) / rect.width) * W;
+    const y = ((evt.clientY - rect.top) / rect.height) * H;
+    return { x, y };
+  };
+
+  const onWheel = (e) => {
+    e.preventDefault?.();
+    const { x: mx, y: my } = toSvgCoords(e);
+    const k = Math.exp(-e.deltaY * 0.0015);
+    const newScale = Math.min(3.2, Math.max(0.8, scale * k));
+    const sx = newScale / scale;
+    // zoom towards cursor
+    setTx(mx - (mx - tx) * sx);
+    setTy(my - (my - ty) * sx);
+    setScale(newScale);
+  };
+
+  const onMouseDown = (e) => {
+    setPanning(true);
+    const { x, y } = toSvgCoords(e);
+    panRef.current = { startX: x, startY: y, startTx: tx, startTy: ty };
+  };
+  const onMouseMove = (e) => {
+    if (!panning) return;
+    const { x, y } = toSvgCoords(e);
+    const dx = x - panRef.current.startX;
+    const dy = y - panRef.current.startY;
+    setTx(panRef.current.startTx + dx);
+    setTy(panRef.current.startTy + dy);
+  };
+  const endPan = () => setPanning(false);
+
+  return (
+    <div className="glass-card globe-card">
+      <h4 className="mb-2">Bases — South Africa</h4>
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${W} ${H}`}
+        className={`globe-svg ${panning ? 'panning' : ''}`}
+        onWheel={onWheel}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={endPan}
+        onMouseLeave={endPan}
+      >
+        <defs>
+          <radialGradient id="glow" cx="50%" cy="45%" r="60%">
+            <stop offset="0%" stopColor="#1a1f2a" />
+            <stop offset="70%" stopColor="#0f141b" />
+            <stop offset="100%" stopColor="#0b0f14" />
+          </radialGradient>
+          <linearGradient id="grid" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.08)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
+          </linearGradient>
+          <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="8" stdDeviation="12" floodOpacity="0.35" floodColor="#000" />
+          </filter>
+        </defs>
+
+        <g transform={`translate(${tx} ${ty}) scale(${scale})`}>
+          {/* map background */}
+          <rect x="0" y="0" width={W} height={H} fill="url(#glow)" />
+          {/* South Africa silhouette */}
+          <path d={saPath} fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.22)" strokeWidth="1.2" filter="url(#softShadow)" />
+
+          {/* markers */}
+          {bases.map((b) => {
+            const c = coords[b.name];
+            if (!c) return null;
+            const { x, y } = project(c.lon, c.lat);
+            // leader line direction points outward from centroid of silhouette
+            const centerX = W/2, centerY = H/2;
+            const angle = Math.atan2(y - centerY, x - centerX);
+            const lx = x + 12 * Math.cos(angle);
+            const ly = y + 12 * Math.sin(angle);
+            const info = countsByReady[b.name] || { total: 0, Ready: 0, Pending: 0, 'Not Ready': 0 };
+            return (
+            <g
+              key={b.name}
+              className="marker"
+              onClick={() => setSelected(b.name)}
+              onMouseEnter={() => setHovered(b.name)}
+              onMouseLeave={() => setHovered(null)}
+            >
+              {hovered === b.name || selected === b.name ? (
+                <circle cx={x} cy={y} r={9} fill="none" stroke="#00e676" strokeWidth="2" opacity="0.9" />
+              ) : null}
+              <circle cx={x} cy={y} r={6} fill={hovered === b.name || selected === b.name ? '#00e676' : '#30d158'} stroke="#0b0f14" strokeWidth="2" filter="url(#softShadow)" />
+              <line x1={x} y1={y} x2={lx} y2={ly} stroke="rgba(255,255,255,0.25)" />
+              <text x={lx + 6} y={ly + 4} fill="#fff" fontSize="12" className="marker-label" style={{ fontWeight: hovered === b.name || selected === b.name ? 700 : 500 }}>{b.name}</text>
+              <title>{`${b.name}\nTotal: ${info.total}\nReady: ${info.Ready}  Pending: ${info.Pending}  Not Ready: ${info['Not Ready']}`}</title>
+            </g>
+            );
+          })}
+        </g>
+      </svg>
+
+      {selected && (() => {
+        const info = countsByReady[selected] || { total: 0, Ready: 0, Pending: 0, 'Not Ready': 0 };
+        return (
+          <div className="globe-selected mt-2">
+            <span className="me-2 text-white-50">Selected:</span>
+            <strong>{selected}</strong>
+            <span className="ms-3">Total: {info.total}</span>
+            <span className="ms-3 text-success">Ready: {info.Ready}</span>
+            <span className="ms-3 text-warning">Pending: {info.Pending}</span>
+            <span className="ms-3 text-danger">Not Ready: {info['Not Ready']}</span>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -326,7 +531,7 @@ function BasesPanel({ rows }) {
     }, {})
   ), [rows]);
 
-  const [selectedBase, setSelectedBase] = useState(bases[0]?.name || null);
+  const [selectedBase, setSelectedBase] = useState(null);
 
   const membersAtBase = useMemo(() => {
     if (!selectedBase) return [];
@@ -359,118 +564,57 @@ function BasesPanel({ rows }) {
   const maxMust = Math.max(1, ...musteringCounts.map(([,v]) => v));
   const maxReady = Math.max(1, ...readinessCounts.map(([,v]) => v));
 
+  // Detailed readiness counts per base (for the summary banner)
+  const countsByBaseDetailed = useMemo(() => {
+    const by = {};
+    for (const p of rows || []) {
+      const name = p.baseName || 'Unknown';
+      if (!by[name]) by[name] = { total: 0, Ready: 0, Pending: 0, 'Not Ready': 0 };
+      by[name].total++;
+      const st = String(p.readinessStatus || 'Ready');
+      if (by[name][st] !== undefined) by[name][st]++;
+    }
+    return by;
+  }, [rows]);
+
+  const BASE_SUMMARY = {
+    'AFB Bloemspruit': 'Rooivalk, Oryx, Agusta',
+    'AFB Waterkloof': 'Transport hub: VIP, C-130, C-47TP',
+    'AFB Swartkop': 'Heritage & rotary ops',
+    'AFB Ysterplaat': 'Maritime/heli support',
+    'AFB Hoedspruit': 'Limpopo air ops & support',
+    'AFB Langebaanweg': 'Pilot training (PC-7 MkII)',
+  };
+
   return (
     <div id="bases" className="glass-card">
       <h4><FaMapMarkedAlt className="me-2" />Bases</h4>
 
-      {/* Base selector */}
-      <div className="d-flex flex-wrap gap-2 mb-3">
-        {bases.map(b => (
-          <button
-            key={b.base_id || b.id || b.name}
-            className={`btn btn-sm ${selectedBase === b.name ? "btn-primary" : "btn-outline-light"}`}
-            onClick={() => setSelectedBase(b.name)}
-            title={`${b.city}, ${b.province}`}
-          >
-            {b.name} <span className="ms-1 badge bg-secondary">{countsByBase[b.name] || 0}</span>
-          </button>
-        ))}
-      </div>
+      {/* Google vector/tilt map (with fallback to SVG if key is missing) */}
+      {/* Try Google Maps if API key present; otherwise OSM (Leaflet) fallback, then globe */}
+      <BasesGoogleMap
+        rows={rows}
+        height={'70vh'}
+        onSelect={(name) => setSelectedBase(name)}
+        fallback={<BasesOSMMap rows={rows} height={'70vh'} onSelect={(name) => setSelectedBase(name)} fallback={<BasesGlobeCard rows={rows} />} />}
+      />
 
-      {selectedBase && (
-        <>
-          <h6 className="text-white-50 mb-2">Mustering distribution at {selectedBase}</h6>
-          <div className="mb-3 chart-row" style={{width: '100%', overflowX: 'auto'}}>
-            <div className="chart-svg">
-              {(() => {
-                const BAR_H = 26; const ROW_H = 34; const labelY = Math.round(BAR_H/2 + 6);
-                const chartH = Math.max(120, musteringCounts.length * ROW_H);
-                const CHART_W = 800; const MARGIN = 0; const INNER_W = CHART_W;
-                return (
-                  <svg width="100%" height={chartH} viewBox={`0 0 ${CHART_W} ${chartH}`} preserveAspectRatio="xMinYMid meet">
-                    <defs>
-                      <linearGradient id="gradBlueMustBase" x1="0" x2="1" y1="0" y2="0">
-                        <stop offset="0%" stopColor="#90caf9"/>
-                        <stop offset="100%" stopColor="#1e88e5"/>
-                      </linearGradient>
-                      <filter id="barShadow2" x="-10%" y="-50%" width="120%" height="200%">
-                        <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#000" floodOpacity="0.35"/>
-                      </filter>
-                    </defs>
-                    {musteringCounts.map(([label, value], idx) => {
-                      const y = idx * ROW_H + MARGIN;
-                      const w = INNER_W * (value / maxMust);
-                      return (
-                        <g key={label} transform={`translate(${MARGIN}, ${y})`}>
-                          <rect x="0" y="0" width={w} height={BAR_H} fill="#1e88e5" rx="6" filter="url(#barShadow2)" style={{ transition: 'width 600ms ease' }} />
-                          <text x={4} y={labelY} fill="#fff" fontSize="12" textAnchor="start">{label}</text>
-                          <title>{`${label}: ${value}`}</title>
-                        </g>
-                      );
-                    })}
-                  </svg>
-                );
-              })()}
-            </div>
-            <div className="chart-values">
-              {musteringCounts.map(([, value], idx) => (
-                <div key={idx} className="chart-value">{value}</div>
-              ))}
-            </div>
+      {selectedBase && (() => {
+        const stats = countsByBaseDetailed[selectedBase] || { total: 0, Ready: 0, Pending: 0, 'Not Ready': 0 };
+        const assets = BASE_SUMMARY[selectedBase];
+        return (
+          <div className="base-info-banner mt-3">
+            <span className="base-info-name">{selectedBase}</span>
+            {assets && <span className="base-info-assets">Assets: <strong>{assets}</strong></span>}
+            <span className="base-info-metric">Total: <strong>{stats.total}</strong></span>
+            <span className="base-info-metric text-success">Ready: <strong>{stats.Ready}</strong></span>
+            <span className="base-info-metric text-warning">Pending: <strong>{stats.Pending}</strong></span>
+            <span className="base-info-metric text-danger">Not Ready: <strong>{stats['Not Ready']}</strong></span>
           </div>
+        );
+      })()}
 
-          <h6 className="text-white-50 mb-2">Readiness at {selectedBase}</h6>
-          <div className="mb-2 chart-row" style={{width: '100%', overflowX: 'auto'}}>
-            <div className="chart-svg">
-              {(() => {
-                const BAR_H = 26; const ROW_H = 34; const labelY = Math.round(BAR_H/2 + 6);
-                const chartH = Math.max(90, readinessCounts.length * ROW_H);
-                const CHART_W = 800; const MARGIN = 0; const INNER_W = CHART_W;
-                return (
-                  <svg width="100%" height={chartH} viewBox={`0 0 ${CHART_W} ${chartH}`} preserveAspectRatio="xMinYMid meet">
-                    <defs>
-                      <linearGradient id="gradGreen" x1="0" x2="1" y1="0" y2="0">
-                        <stop offset="0%" stopColor="#81c784"/>
-                        <stop offset="100%" stopColor="#2ecc71"/>
-                      </linearGradient>
-                      <linearGradient id="gradYellow" x1="0" x2="1" y1="0" y2="0">
-                        <stop offset="0%" stopColor="#ffd54f"/>
-                        <stop offset="100%" stopColor="#f1c40f"/>
-                      </linearGradient>
-                      <linearGradient id="gradRed" x1="0" x2="1" y1="0" y2="0">
-                        <stop offset="0%" stopColor="#ef9a9a"/>
-                        <stop offset="100%" stopColor="#e74c3c"/>
-                      </linearGradient>
-                      <filter id="barShadow3" x="-10%" y="-50%" width="120%" height="200%">
-                        <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#000" floodOpacity="0.35"/>
-                      </filter>
-                    </defs>
-                    {readinessCounts.map(([label, value], idx) => {
-                      const y = idx * ROW_H + MARGIN;
-                      const w = INNER_W * (value / maxReady);
-                      const grad = label === 'Ready' ? '#2ecc71' : (label === 'Pending' ? '#f1c40f' : '#e74c3c');
-                      return (
-                        <g key={label} transform={`translate(${MARGIN}, ${y})`}>
-                          <rect x="0" y="0" width={w} height={BAR_H} fill={grad} rx="6" filter="url(#barShadow3)" style={{ transition: 'width 600ms ease' }} />
-                          <text x={4} y={labelY} fill="#fff" fontSize="12" textAnchor="start">{label}</text>
-                          <title>{`${label}: ${value}`}</title>
-                        </g>
-                      );
-                    })}
-                  </svg>
-                );
-              })()}
-            </div>
-            <div className="chart-values">
-              {readinessCounts.map(([, value], idx) => (
-                <div key={idx} className="chart-value">{value}</div>
-              ))}
-            </div>
-          </div>
-
-          <div className="text-muted small">Total members: {membersAtBase.length}</div>
-        </>
-      )}
+      {/* Map-only view: base selector and charts removed */}
     </div>
   );
 }
@@ -654,6 +798,7 @@ function ProfilePanel({ rows }) {
 
   const [form, setForm] = useState(initial);
   useEffect(() => { setForm(initial); }, [match]);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Rank options (as requested)
   const rankOptions = [
@@ -699,7 +844,9 @@ function ProfilePanel({ rows }) {
       await submitProfileChange(payloadFromForm());
       alert("Changes submitted for approval.");
     }
+    setIsEditing(false);
   };
+  const onCancel = () => { setForm(initial); setIsEditing(false); };
 
   return (
     <div id="profile-panel" className="glass-card">
@@ -713,14 +860,14 @@ function ProfilePanel({ rows }) {
           </div>
           <div className="col-md-4">
             <Form.Label className="text-white-50">Rank</Form.Label>
-            <Form.Select name="rank" value={form.rank} onChange={onChange} className="auth-input">
+            <Form.Select name="rank" value={form.rank} onChange={onChange} className="auth-input" disabled={!isEditing}>
               <option value="">Select...</option>
               {rankOptions.map(r => (<option key={r} value={r}>{r}</option>))}
             </Form.Select>
           </div>
           <div className="col-md-4">
             <Form.Label className="text-white-50">Readiness</Form.Label>
-            <Form.Select name="readinessStatus" value={form.readinessStatus} onChange={onChange} className="auth-input">
+            <Form.Select name="readinessStatus" value={form.readinessStatus} onChange={onChange} className="auth-input" disabled={!isEditing}>
               <option value="Ready">Ready</option>
               <option value="Pending">Pending</option>
               <option value="Not Ready">Not Ready</option>
@@ -733,16 +880,16 @@ function ProfilePanel({ rows }) {
           </div>
           <div className="col-md-6">
             <Form.Label className="text-white-50">Surname</Form.Label>
-            <Form.Control name="surname" value={form.surname} onChange={onChange} className="auth-input" />
+            <Form.Control name="surname" value={form.surname} onChange={onChange} className="auth-input" disabled={!isEditing} />
           </div>
 
           <div className="col-md-6">
             <Form.Label className="text-white-50">Email</Form.Label>
-            <Form.Control type="email" name="email" value={form.email} onChange={onChange} className="auth-input" />
+            <Form.Control type="email" name="email" value={form.email} onChange={onChange} className="auth-input" disabled={!isEditing} />
           </div>
           <div className="col-md-6">
             <Form.Label className="text-white-50">Cellphone</Form.Label>
-            <Form.Control name="cellphone" value={form.cellphone} onChange={onChange} className="auth-input" />
+            <Form.Control name="cellphone" value={form.cellphone} onChange={onChange} className="auth-input" disabled={!isEditing} />
           </div>
 
           <div className="col-md-6">
@@ -756,6 +903,7 @@ function ProfilePanel({ rows }) {
                 setForm(prev => ({ ...prev, musteringCode: code, musteringName: found?.name || prev.musteringName, postDescription: "" }));
               }}
               className="auth-input"
+              disabled={!isEditing}
             >
               <option value="">Select...</option>
               {mockMusterings.map(m => (<option key={m.code} value={m.code}>{m.name}</option>))}
@@ -763,7 +911,7 @@ function ProfilePanel({ rows }) {
           </div>
           <div className="col-md-6">
             <Form.Label className="text-white-50">Post Description</Form.Label>
-            <Form.Select name="postDescription" value={form.postDescription} onChange={onChange} className="auth-input">
+            <Form.Select name="postDescription" value={form.postDescription} onChange={onChange} className="auth-input" disabled={!isEditing}>
               <option value="">Select...</option>
               {postDescriptionOptions.map(opt => (<option key={opt} value={opt}>{opt}</option>))}
             </Form.Select>
@@ -776,6 +924,7 @@ function ProfilePanel({ rows }) {
               value={form.unitName}
               onChange={onChange}
               className="auth-input"
+              disabled={!isEditing}
             >
               <option value="">Select...</option>
               {mockUnits.map(u => (<option key={u.unit_id} value={u.name}>{u.name}</option>))}
@@ -788,6 +937,7 @@ function ProfilePanel({ rows }) {
               value={form.baseName}
               onChange={onChange}
               className="auth-input"
+              disabled={!isEditing}
             >
               <option value="">Select...</option>
               {mockBases.map(b => (<option key={b.base_id} value={b.name}>{b.name}</option>))}
@@ -803,7 +953,15 @@ function ProfilePanel({ rows }) {
             </div>
           )}
           <div className="d-flex gap-2">
-            <Button variant="primary" onClick={onSave}>Save Changes</Button>
+            {!isEditing && (
+              <Button variant="primary" onClick={() => setIsEditing(true)}>Edit Profile</Button>
+            )}
+            {isEditing && (
+              <>
+                <Button variant="primary" onClick={onSave}>Save Changes</Button>
+                <Button variant="outline-light" onClick={onCancel}>Cancel</Button>
+              </>
+            )}
             {/* Reviewer actions */}
             {pendingProfileChange && (user?.tier === 1 || user?.tier === 2) && pendingProfileChange.status === 'pending' && (
               <>
@@ -820,21 +978,7 @@ function ProfilePanel({ rows }) {
           </div>
         </div>
 
-        {pendingProfileChange && (
-          <div className="mt-3">
-            <h6 className="text-white-50">Proposed changes</h6>
-            <Table size="sm" variant="dark">
-              <thead>
-                <tr><th>Field</th><th>Current</th><th>Proposed</th></tr>
-              </thead>
-              <tbody>
-                {Object.entries(pendingProfileChange.updates || {}).map(([k,v]) => (
-                  <tr key={k}><td>{k}</td><td>{String(user?.[k] ?? '')}</td><td>{String(v)}</td></tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
-        )}
+        {/* Proposed changes table removed per request */}
       </Form>
     </div>
   );
