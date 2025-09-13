@@ -23,6 +23,7 @@ function loadGoogle(apiKey) {
 }
 
 const DEFAULT_CENTER = { lat: -28.5, lng: 24.7 };
+const SA_BOUNDS = { north: -22, south: -35, east: 33, west: 16 };
 
 // Lightweight dark style if no MapID was provided
 const DARK_STYLE = [
@@ -95,6 +96,15 @@ export default function BasesGoogleMap({ rows, height = 360, onSelect, fallback 
           styles: mapId ? undefined : DARK_STYLE,
         });
         mapRef.current = map;
+        // Restrict and fit to South Africa bounds on initial load
+        try {
+          const bounds = new google.maps.LatLngBounds(
+            new google.maps.LatLng(SA_BOUNDS.south, SA_BOUNDS.west),
+            new google.maps.LatLng(SA_BOUNDS.north, SA_BOUNDS.east)
+          );
+          map.fitBounds(bounds, 60);
+          map.setOptions({ restriction: { latLngBounds: bounds, strictBounds: true } });
+        } catch {}
 
         const info = new google.maps.InfoWindow();
         const mkLib = google.maps.marker;
@@ -174,7 +184,17 @@ export default function BasesGoogleMap({ rows, height = 360, onSelect, fallback 
           if (!bounds.isEmpty()) map.fitBounds(bounds, 60);
         };
         addBtn('Fit', 'Fit to bases', fitToBases);
-        addBtn('⟲0', 'Reset', () => { map.setZoom(5); map.setHeading(20); map.setTilt(67.5); map.panTo(DEFAULT_CENTER); });
+        addBtn('⟲0', 'Reset', () => {
+          try {
+            const bounds = new google.maps.LatLngBounds(
+              new google.maps.LatLng(SA_BOUNDS.south, SA_BOUNDS.west),
+              new google.maps.LatLng(SA_BOUNDS.north, SA_BOUNDS.east)
+            );
+            map.fitBounds(bounds, 60);
+          } catch {
+            map.setZoom(5); map.setHeading(20); map.setTilt(67.5); map.panTo(DEFAULT_CENTER);
+          }
+        });
         map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(controls);
 
         setReady(true);

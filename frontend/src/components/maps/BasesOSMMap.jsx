@@ -34,6 +34,7 @@ function loadLeaflet() {
 }
 
 const DEFAULT_CENTER = [ -28.5, 24.7 ]; // South Africa
+const SA_BOUNDS = [[-35, 16], [-22, 33]]; // [south, west], [north, east]
 const BASE_COORDS = {
   'AFB Waterkloof': { lat: -25.83, lng: 28.22 },
   'AFB Swartkop': { lat: -25.80, lng: 28.17 },
@@ -78,7 +79,7 @@ export default function BasesOSMMap({ rows, height = 360, onSelect, fallback = n
         mapRef.current.remove();
         mapRef.current = null;
       }
-      const map = L.map(ref.current, { zoomControl: false }).setView(DEFAULT_CENTER, 5);
+      const map = L.map(ref.current, { zoomControl: false, maxBoundsViscosity: 0.7 }).setView(DEFAULT_CENTER, 5);
       mapRef.current = map;
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -120,7 +121,8 @@ export default function BasesOSMMap({ rows, height = 360, onSelect, fallback = n
 
       if (markers.length) {
         const group = L.featureGroup(markers);
-        map.fitBounds(group.getBounds().pad(0.2));
+        const mb = group.getBounds();
+        if (mb.isValid()) map.fitBounds(mb.pad(0.2));
       }
 
       // Custom dark controls for consistency

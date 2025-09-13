@@ -621,148 +621,99 @@ function BasesPanel({ rows }) {
 
 function UnitsPanel({ rows }) {
   const units = mockUnits || [];
+  const bases = mockBases || [];
+  const baseById = useMemo(() => Object.fromEntries(bases.map(b => [b.base_id, b])), [bases]);
 
-  // Count members per unit name
-  const countsByUnit = useMemo(() => (
-    rows.reduce((acc, p) => {
-      const name = p.unitName || "Unknown";
-      acc[name] = (acc[name] || 0) + 1;
-      return acc;
-    }, {})
-  ), [rows]);
+  const [query, setQuery] = useState("");
+  const [selectedUnit, setSelectedUnit] = useState(null);
 
-  const [selectedUnit, setSelectedUnit] = useState(units[0]?.name || null);
+  const filteredUnits = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return units;
+    return units.filter(u => (u.name || "").toLowerCase().includes(q));
+  }, [units, query]);
 
-  const membersAtUnit = useMemo(() => {
-    if (!selectedUnit) return [];
-    return rows.filter(p => (p.unitName || "Unknown") === selectedUnit);
-  }, [rows, selectedUnit]);
+  const activeUnit = useMemo(() => selectedUnit || filteredUnits[0] || null, [selectedUnit, filteredUnits]);
 
-  // Group by mustering within the unit
-  const musteringCounts = useMemo(() => {
-    const by = {};
-    for (const p of membersAtUnit) {
-      const key = p.musteringName || p.mustering_code || "Unknown";
-      by[key] = (by[key] || 0) + 1;
-    }
-    return Object.entries(by).sort((a,b) => b[1]-a[1]);
-  }, [membersAtUnit]);
+  const stats = useMemo(() => {
+    if (!activeUnit) return null;
+    const members = rows.filter(p => (p.unitName || "") === activeUnit.name);
+    const total = members.length;
+    const ready = members.filter(p => String(p.readinessStatus).toLowerCase() === 'ready').length;
+    const pending = members.filter(p => String(p.readinessStatus).toLowerCase() === 'pending').length;
+    const notReady = members.filter(p => String(p.readinessStatus).toLowerCase() === 'not ready').length;
+    return { total, ready, pending, notReady };
+  }, [rows, activeUnit]);
 
-  // Group by rank within the unit
-  const rankCounts = useMemo(() => {
-    const by = {};
-    for (const p of membersAtUnit) {
-      const key = p.rank || "Unknown";
-      by[key] = (by[key] || 0) + 1;
-    }
-    return Object.entries(by).sort((a,b) => b[1]-a[1]);
-  }, [membersAtUnit]);
+  const UNIT_ASSETS = {
+    '17 Squadron': 'Oryx, Rooivalk, Agusta',
+    'Command and Control School': 'C2, Training Simulators',
+    'Logistics Support Wing': 'Ground Support, Supply',
+    'Intelligence Wing': 'ISR, EW Support',
+    'Protection Services Unit': 'VIP, Access Control',
+    'Air Force Band': 'Ceremonial',
+    'Technical Maintenance Wing': 'Aircraft Maintenance',
+    'Engineering Directorate': 'Aviation/Software Engineering',
+    'Armoury Section': 'Armourers',
+    'Legal Services': 'Legal Advisory',
+    'Chaplaincy': 'Spiritual Support',
+    'Finance Division': 'Finance/Payroll',
+    'Corporate Communications': 'Media & Public Affairs',
+    'Human Resources': 'HR & Adjutant',
+    'Environmental Affairs': 'Environmental Management'
+  };
 
-  const maxMust = Math.max(1, ...musteringCounts.map(([,v]) => v));
-  const maxRank = Math.max(1, ...rankCounts.map(([,v]) => v));
+  const location = useMemo(() => {
+    if (!activeUnit) return null;
+    const base = baseById[activeUnit.base_id];
+    if (!base) return null;
+    return { base: base.name, city: base.city, province: base.province };
+  }, [activeUnit, baseById]);
 
   return (
     <div id="units" className="glass-card">
       <h4><FaUsers className="me-2" />Units</h4>
 
-      {/* Unit selector */}
+      <InputGroup className="mb-3">
+        <InputGroup.Text><FaSearch /></InputGroup.Text>
+        <FormControl
+          placeholder="Search units by name..."
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setSelectedUnit(null); }}
+        />
+      </InputGroup>
+
       <div className="d-flex flex-wrap gap-2 mb-3">
-        {units.map(u => (
+        {filteredUnits.slice(0, 8).map(u => (
           <button
-            key={u.unit_id || u.id || u.name}
-            className={`btn btn-sm ${selectedUnit === u.name ? "btn-primary" : "btn-outline-light"}`}
-            onClick={() => setSelectedUnit(u.name)}
-            title={u.mustering_code ? `Mustering: ${u.mustering_code}` : ''}
+            key={u.unit_id || u.name}
+            className={`btn btn-sm ${activeUnit?.name === u.name ? 'btn-primary' : 'btn-outline-light'}`}
+            onClick={() => setSelectedUnit(u)}
           >
-            {u.name} <span className="ms-1 badge bg-secondary">{countsByUnit[u.name] || 0}</span>
+            {u.name}
           </button>
         ))}
+        {filteredUnits.length === 0 && (
+          <span className="text-muted">No units match that search.</span>
+        )}
       </div>
 
-      {selectedUnit && (
-        <>
-          <h6 className="text-white-50 mb-2">Mustering distribution in {selectedUnit}</h6>
-          <div className="mb-3 chart-row" style={{width: '100%', overflowX: 'auto'}}>
-            <div className="chart-svg">
-              {(() => {
-                const BAR_H = 26; const ROW_H = 34; const labelY = Math.round(BAR_H/2 + 6);
-                const chartH = Math.max(120, musteringCounts.length * ROW_H);
-                const CHART_W = 800; const MARGIN = 0; const INNER_W = CHART_W;
-                return (
-                  <svg width="100%" height={chartH} viewBox={`0 0 ${CHART_W} ${chartH}`} preserveAspectRatio="xMinYMid meet">
-                    <defs>
-                      <linearGradient id="gradBlueUnits" x1="0" x2="1" y1="0" y2="0">
-                        <stop offset="0%" stopColor="#90caf9"/>
-                        <stop offset="100%" stopColor="#1e88e5"/>
-                      </linearGradient>
-                      <filter id="barShadow4" x="-10%" y="-50%" width="120%" height="200%">
-                        <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#000" floodOpacity="0.35"/>
-                      </filter>
-                    </defs>
-                    {musteringCounts.map(([label, value], idx) => {
-                      const y = idx * ROW_H + MARGIN;
-                      const w = INNER_W * (value / maxMust);
-                      return (
-                        <g key={label} transform={`translate(${MARGIN}, ${y})`}>
-                          <rect x="0" y="0" width={w} height={BAR_H} fill="#1e88e5" rx="6" filter="url(#barShadow4)" style={{ transition: 'width 600ms ease' }} />
-                          <text x={4} y={labelY} fill="#fff" fontSize="12" textAnchor="start">{label}</text>
-                          <title>{`${label}: ${value}`}</title>
-                        </g>
-                      );
-                    })}
-                  </svg>
-                );
-              })()}
-            </div>
-            <div className="chart-values">
-              {musteringCounts.map(([, value], idx) => (
-                <div key={idx} className="chart-value">{value}</div>
-              ))}
-            </div>
-          </div>
-
-          <h6 className="text-white-50 mb-2">Rank distribution in {selectedUnit}</h6>
-          <div className="mb-2 chart-row" style={{width: '100%', overflowX: 'auto'}}>
-            <div className="chart-svg">
-              {(() => {
-                const BAR_H = 26; const ROW_H = 34; const labelY = Math.round(BAR_H/2 + 6);
-                const chartH = Math.max(120, rankCounts.length * ROW_H);
-                const CHART_W = 800; const MARGIN = 0; const INNER_W = CHART_W;
-                return (
-                  <svg width="100%" height={chartH} viewBox={`0 0 ${CHART_W} ${chartH}`} preserveAspectRatio="xMinYMid meet">
-                    <defs>
-                      <linearGradient id="gradGreenUnits" x1="0" x2="1" y1="0" y2="0">
-                        <stop offset="0%" stopColor="#80e7b9"/>
-                        <stop offset="100%" stopColor="#00c853"/>
-                      </linearGradient>
-                      <filter id="barShadow5" x="-10%" y="-50%" width="120%" height="200%">
-                        <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#000" floodOpacity="0.35"/>
-                      </filter>
-                    </defs>
-                    {rankCounts.map(([label, value], idx) => {
-                      const y = idx * ROW_H + MARGIN;
-                      const w = INNER_W * (value / maxRank);
-                      return (
-                        <g key={label} transform={`translate(${MARGIN}, ${y})`}>
-                          <rect x="0" y="0" width={w} height={BAR_H} fill="#00c853" rx="6" filter="url(#barShadow5)" style={{ transition: 'width 600ms ease' }} />
-                          <text x={4} y={labelY} fill="#fff" fontSize="12" textAnchor="start">{label}</text>
-                          <title>{`${label}: ${value}`}</title>
-                        </g>
-                      );
-                    })}
-                  </svg>
-                );
-              })()}
-            </div>
-            <div className="chart-values">
-              {rankCounts.map(([, value], idx) => (
-                <div key={idx} className="chart-value">{value}</div>
-              ))}
-            </div>
-          </div>
-
-          <div className="text-muted small">Total members: {membersAtUnit.length}</div>
-        </>
+      {activeUnit && (
+        <div className="unit-info-banner">
+          <span className="unit-info-name">{activeUnit.name}</span>
+          {location && (
+            <span className="unit-info-loc">Location: <strong>{location.city}, {location.province}</strong> <span className="text-white-50">({location.base})</span></span>
+          )}
+          {stats && (
+            <>
+              <span className="unit-info-metric">Members: <strong>{stats.total}</strong></span>
+              <span className="unit-info-metric text-success">Ready: <strong>{stats.ready}</strong></span>
+              <span className="unit-info-metric text-warning">Pending: <strong>{stats.pending}</strong></span>
+              <span className="unit-info-metric text-danger">Not Ready: <strong>{stats.notReady}</strong></span>
+            </>
+          )}
+          <span className="unit-info-assets">Specialty/Air Assets: <strong>{UNIT_ASSETS[activeUnit.name] || '—'}</strong></span>
+        </div>
       )}
     </div>
   );
@@ -1487,6 +1438,7 @@ export default function DashboardPage() {
             canExport={rows.length > 0}
           />
           <NotificationsPanel />
+          <SystemStatusPanel />
         </div>
       </aside>
 

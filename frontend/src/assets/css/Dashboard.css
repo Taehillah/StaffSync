@@ -527,6 +527,29 @@
 }
 .base-info-assets strong, .base-info-metric strong { font-weight: 800; color: #fff; }
 
+/* Units info banner styling */
+.unit-info-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 2px solid rgba(66, 165, 245, 0.45);
+  background: linear-gradient(180deg, rgba(24, 35, 52, 0.35), rgba(12, 16, 22, 0.35));
+  box-shadow: 0 10px 28px rgba(0,0,0,0.35) inset;
+}
+.unit-info-name {
+  background: linear-gradient(90deg, #42a5f5, #26a69a);
+  color: #fff;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.22);
+}
+.unit-info-loc, .unit-info-metric, .unit-info-assets { color: #e3f2fd; }
+.unit-info-assets strong, .unit-info-metric strong { color: #fff; font-weight: 800; }
+
 /* ─── Form controls: match auth glass effect ─────────────────────────────── */
 .glass-panel .form-control,
 .glass-panel .form-select,
