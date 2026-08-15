@@ -55,9 +55,9 @@ const getUnitCategory = (unitName = "") => {
   if (/15 Squadron|16 Squadron|17 Squadron|19 Squadron|22 Squadron|87 Helicopter/i.test(unitName)) return "Helicopter Systems";
   if (/21 Squadron|28 Squadron|35 Squadron|41 Squadron|44 Squadron|C Flight|10 Squadron|10 Squadron/i.test(unitName)) return "Transport, Maritime & Reconnaissance";
   if (/Central Flying|80 Air Navigation|Air Force College|Gymnasium|School|68 Air School/i.test(unitName)) return "Education, Training & Development";
-  if (/140 Squadron|142 Squadron|Airspace|Lowveld|Bushveld|Ellisras|JTAC|Terminal Attack|Command and Control/i.test(unitName)) return "Command and Control / Air Defence";
+  if (/140 Squadron|142 Squadron|Airspace|Lowveld|Bushveld|Ellisras|JTAC|Terminal Attack|Command and Control|Mobile Communications/i.test(unitName)) return "Command and Control / Air Defence";
   if (/500 Squadron|501 Squadron|502 Squadron|503 Squadron|504 Squadron|505 Squadron|506 Squadron|508 Squadron|514 Squadron|515 Squadron|516 Squadron|525 Squadron|526 Squadron|Police/i.test(unitName)) return "Security Services";
-  if (/Air Servicing|Air Depot|Deployment Support|Tactical Airfield|Mobile Communications|Rapid Deployment|Publications|Photographic|Auction|Band|Procurement|Telecommunications|Electronic Warfare|Cookery|Logistics/i.test(unitName)) return "Logistic Support Services";
+  if (/Air Servicing|Air Depot|Deployment Support|Tactical Airfield|Rapid Deployment|Publications|Photographic|Auction|Band|Procurement|Telecommunications|Electronic Warfare|Cookery|Logistics/i.test(unitName)) return "Logistic Support Services";
   if (/Intelligence|Reconnaissance/i.test(unitName)) return "Operational Support & Intelligence";
   return "Base Support / Administration";
 };
@@ -86,7 +86,7 @@ const getUnitFunction = (unitName = "") => ({
   "SA Air Force College": "Training | Air power development",
   "Rapid Deployment Air Operations Team 43": "Logistic Support | Deployable air operations",
   "Rapid Deployment Air Operations Team 46": "Logistic Support | Deployable air operations",
-  "Mobile Communications Unit": "Logistic Support | Mobile C2 communications",
+  "Mobile Communications Unit": "Command and Control | Mobile C2 communications",
   "92 Tactical Airfield Unit": "Logistic Support | Tactical airfield support",
   "Airspace Control Unit": "Air Defence | Airspace control",
   "Lowveld Airspace Control Sector": "Air Defence | Airspace sector control",
@@ -145,6 +145,7 @@ const ASSET_CATALOG = {
       { name: "Aircraft Tug", role: "Aircraft ground movement", squadron: "Air Servicing Unit", posts: ["Driver", "Aircraft Mechanic", "Flightline Controller"] },
       { name: "Clark Tractor", role: "Ground handling", squadron: "Air Servicing Unit", posts: ["Driver", "Vehicle Mechanic", "Aircraft Mechanic"] },
       { name: "Ford Tractor", role: "Ground handling", squadron: "Air Servicing Unit", posts: ["Driver", "Vehicle Mechanic", "Aircraft Mechanic"] },
+      { name: "Low-bed Trailer", role: "Heavy equipment movement", squadron: "Ground Support / 18 Deployment Support Unit", posts: ["Driver", "Vehicle Mechanic", "Logcell", "Storeman"] },
       { name: "Bomb Loader", role: "Weapons loading support", squadron: "Armament / Weapons Section", posts: ["Armourer", "Driver", "Aircraft Mechanic"] },
       { name: "SAMIL 20", role: "Security / light support", squadron: "Security Services", posts: ["Driver", "Vehicle Mechanic", "Military Police"] },
       { name: "TC 4", role: "Troop / utility vehicle", squadron: "Ground support", posts: ["Driver", "Vehicle Mechanic", "Logcell", "Military Police"] },
@@ -158,7 +159,6 @@ const ASSET_CATALOG = {
     type: "18 DSU / Mobile Deployment",
     icon: FaClipboardList,
     items: [
-      { name: "Low-bed Trailer", role: "Heavy equipment movement", squadron: "18 Deployment Support Unit", posts: ["Driver", "Vehicle Mechanic", "Logcell", "Storeman"] },
       { name: "10 t Truck", role: "Deployable transport", squadron: "18 Deployment Support Unit", posts: ["Driver", "Vehicle Mechanic", "Logcell"] },
       { name: "20 t Truck", role: "Deployable transport", squadron: "18 Deployment Support Unit", posts: ["Driver", "Vehicle Mechanic", "Logcell"] },
       { name: "30 t Truck", role: "Heavy deployable transport", squadron: "18 Deployment Support Unit", posts: ["Driver", "Vehicle Mechanic", "Logcell"] },
@@ -225,6 +225,57 @@ const memberMatchesPost = (member, post) => {
   return aliases.some(alias => haystack.includes(alias) || alias.includes(haystack));
 };
 
+const POST_DEFAULT_COUNTS = {
+  "Armourer": 2,
+  "Aircraft Mechanic": 2,
+  "Aircraft Mechanics": 4,
+  "Avionics": 2,
+  "MSC Tech": 2,
+};
+
+const getPostRequirementCount = (assetName, post) => {
+  if (assetName === "Oryx") {
+    return {
+      "Pilot Commander": 1,
+      "Co-Pilot": 1,
+      "Armourer": 2,
+      "Aircraft Mechanics": 4,
+      "Avionics": 2,
+      "MSC Tech": 2,
+    }[post] || 1;
+  }
+  return POST_DEFAULT_COUNTS[post] || 1;
+};
+
+const buildPostRequirements = (asset) => (
+  (asset?.posts || []).map(post => ({
+    post,
+    required: getPostRequirementCount(asset?.name, post),
+  }))
+);
+
+const buildRequirementCounts = (asset) => (
+  Object.fromEntries(buildPostRequirements(asset).map(({ post, required }) => [post, required]))
+);
+
+const getAssignedForPost = (assignments, post) => (
+  Array.isArray(assignments[post]) ? assignments[post] : (assignments[post] ? [assignments[post]] : [])
+);
+
+const getDeploymentMemberIssues = (member, { neededFrom, duration, deploymentType, baseName }) => {
+  const issues = [];
+  const requestedStart = new Date(`${neededFrom}T00:00:00`);
+  const availableFrom = new Date(`${member.availableFrom || neededFrom}T00:00:00`);
+  if (String(member.readinessStatus).toLowerCase() !== "ready") issues.push("Not combat ready");
+  if (member.is_deployable !== true) issues.push("Not marked deployable");
+  if (String(member.availabilityStatus || "Available").toLowerCase() !== "available") issues.push("Not currently available");
+  if (availableFrom > requestedStart) issues.push(`Available from ${formatDate(member.availableFrom)}`);
+  if (Number(member.maxDeploymentDays || 0) < Number(duration || 0)) issues.push(`Only ${member.maxDeploymentDays || 0} days available`);
+  if (deploymentType === "external" && member.is_area_bound) issues.push("Area-bound member");
+  if (baseName !== "All" && member.baseName !== baseName) issues.push(`Different base: ${member.baseName || "Unknown"}`);
+  return issues;
+};
+
 function SidebarNavigation({ active, onNavigate }) {
   const item = (key, label, Icon) => (
     <li className="nav-item">
@@ -240,6 +291,8 @@ function SidebarNavigation({ active, onNavigate }) {
   return (
     <ul className="sidebar-nav glass-card">
       {item("overview", "Force Prep", GiCompass)}
+      {item("createDeployment", "Create Deployment", FaBolt)}
+      {item("deploymentBoard", "Deployment Board", FaClipboardList)}
       {item("availability", "Deployment", FaUserCheck)}
       {item("assets", "Assets", FaPlane)}
       {item("personnel", "Muster Roll", GiCompass)}
@@ -1249,6 +1302,8 @@ function AssetsPlannerPanel({ rows, onOpen }) {
     category.items.find(item => item.name === assetName) || category.items[0]
   ), [category, assetName]);
 
+  const postRequirements = useMemo(() => buildPostRequirements(selectedAsset), [selectedAsset]);
+
   const eligibleMembers = useMemo(() => (
     rows
       .filter(member => {
@@ -1264,7 +1319,7 @@ function AssetsPlannerPanel({ rows, onOpen }) {
 
   const suggestionsByPost = useMemo(() => {
     const map = {};
-    (selectedAsset?.posts || []).forEach(post => {
+    postRequirements.forEach(({ post }) => {
       map[post] = eligibleMembers
         .map(member => {
           const matchedPost = memberMatchesPost(member, post);
@@ -1282,25 +1337,40 @@ function AssetsPlannerPanel({ rows, onOpen }) {
         .slice(0, 5);
     });
     return map;
-  }, [eligibleMembers, selectedAsset, deploymentType]);
+  }, [eligibleMembers, postRequirements, deploymentType]);
 
   const assignedMembers = useMemo(() => (
     Object.entries(assignments)
-      .map(([post, forceNumber]) => {
-        const member = rows.find(item => item.force_number === forceNumber);
-        return member ? { post, member } : null;
-      })
-      .filter(Boolean)
+      .flatMap(([post, forceNumbers]) => (
+        (Array.isArray(forceNumbers) ? forceNumbers : [forceNumbers])
+          .map(forceNumber => {
+            const member = rows.find(item => item.force_number === forceNumber);
+            return member ? { post, member } : null;
+          })
+          .filter(Boolean)
+      ))
   ), [assignments, rows]);
 
   const assignMember = (post, forceNumber) => {
-    setAssignments(prev => ({ ...prev, [post]: forceNumber }));
+    if (!forceNumber) return;
+    const requirement = postRequirements.find(item => item.post === post)?.required || 1;
+    setAssignments(prev => {
+      const current = Array.isArray(prev[post]) ? prev[post] : (prev[post] ? [prev[post]] : []);
+      if (current.includes(forceNumber) || current.length >= requirement) return prev;
+      return { ...prev, [post]: [...current, forceNumber] };
+    });
   };
 
-  const clearMember = (post) => {
+  const clearMember = (post, forceNumber) => {
     setAssignments(prev => {
       const next = { ...prev };
-      delete next[post];
+      if (forceNumber) {
+        const current = (Array.isArray(next[post]) ? next[post] : [next[post]]).filter(Boolean);
+        const filtered = current.filter(item => item !== forceNumber);
+        if (filtered.length) next[post] = filtered; else delete next[post];
+      } else {
+        delete next[post];
+      }
       return next;
     });
   };
@@ -1352,7 +1422,7 @@ function AssetsPlannerPanel({ rows, onOpen }) {
         <div className="glass-card post-fill-panel">
           <div className="summary-card-header">
             <h4>{selectedAsset?.name}</h4>
-            <span className="summary-chip">{selectedAsset?.posts.length || 0} posts</span>
+            <span className="summary-chip">{postRequirements.reduce((sum, item) => sum + item.required, 0)} posts</span>
           </div>
           <div className="asset-context">
             <span>Role: <strong>{selectedAsset?.role}</strong></span>
@@ -1361,21 +1431,22 @@ function AssetsPlannerPanel({ rows, onOpen }) {
           </div>
 
           <div className="post-grid">
-            {(selectedAsset?.posts || []).map(post => {
+            {postRequirements.map(({ post, required }) => {
               const suggestions = suggestionsByPost[post] || [];
-              const assignedForce = assignments[post] || "";
-              const assigned = rows.find(member => member.force_number === assignedForce);
+              const assignedForces = Array.isArray(assignments[post]) ? assignments[post] : (assignments[post] ? [assignments[post]] : []);
+              const assigned = assignedForces.map(force => rows.find(member => member.force_number === force)).filter(Boolean);
+              const isFilled = assigned.length >= required;
               return (
-                <div className="post-card" key={post}>
+                <div className={`post-card ${isFilled ? "is-filled" : ""}`} key={post}>
                   <div className="post-card-header">
                     <div>
                       <strong>{post}</strong>
-                      <span>{assigned ? `${assigned.rank} ${assigned.surname}` : "Open post"}</span>
+                      <span>{assigned.length}/{required} filled</span>
                     </div>
-                    {assigned && <Button variant="outline-light" size="sm" onClick={() => clearMember(post)}>Clear</Button>}
+                    {assigned.length > 0 && <Button variant="outline-light" size="sm" onClick={() => clearMember(post)}>Clear</Button>}
                   </div>
 
-                  <Form.Select value={assignedForce} onChange={(event) => assignMember(post, event.target.value)}>
+                  <Form.Select value="" disabled={isFilled} onChange={(event) => assignMember(post, event.target.value)}>
                     <option value="">Nominate member...</option>
                     {eligibleMembers.map(member => (
                       <option key={member.force_number} value={member.force_number}>
@@ -1383,6 +1454,16 @@ function AssetsPlannerPanel({ rows, onOpen }) {
                       </option>
                     ))}
                   </Form.Select>
+
+                  {assigned.length > 0 && (
+                    <div className="assigned-chip-list">
+                      {assigned.map(member => (
+                        <button key={member.force_number} className="assigned-chip" onClick={() => clearMember(post, member.force_number)}>
+                          {member.rank} {member.surname}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="suggestion-list">
                     {suggestions.map(member => (
@@ -1405,7 +1486,7 @@ function AssetsPlannerPanel({ rows, onOpen }) {
         <div className="glass-card manifest-panel">
           <div className="summary-card-header">
             <h4>Deployment Nominal Roll</h4>
-            <span className="summary-chip">{assignedMembers.length}/{selectedAsset?.posts.length || 0} filled</span>
+            <span className="summary-chip">{assignedMembers.length}/{postRequirements.reduce((sum, item) => sum + item.required, 0)} filled</span>
           </div>
           <div className="manifest-list">
             {assignedMembers.map(({ post, member }) => (
@@ -1420,6 +1501,486 @@ function AssetsPlannerPanel({ rows, onOpen }) {
             {!assignedMembers.length && <div className="text-muted">No posts filled yet.</div>}
           </div>
         </div>
+      </section>
+    </div>
+  );
+}
+
+function CreateDeploymentPanel({ rows, onOpen, onSaveDeployment, onOpenBoard }) {
+  const wizardSteps = ["Mission", "Posts", "Nominate", "Review"];
+  const [categoryKey, setCategoryKey] = useState("aircraft");
+  const category = ASSET_CATALOG[categoryKey];
+  const [assetName, setAssetName] = useState(category.items[0]?.name || "");
+  const [deploymentType, setDeploymentType] = useState("internal");
+  const [missionName, setMissionName] = useState("");
+  const [baseName, setBaseName] = useState("All");
+  const [duration, setDuration] = useState(14);
+  const [neededFrom, setNeededFrom] = useState(new Date().toISOString().slice(0, 10));
+  const [assignments, setAssignments] = useState({});
+  const [requirementCounts, setRequirementCounts] = useState({});
+  const [currentStep, setCurrentStep] = useState(0);
+
+  useEffect(() => {
+    const next = ASSET_CATALOG[categoryKey].items[0]?.name || "";
+    setAssetName(next);
+    setAssignments({});
+  }, [categoryKey]);
+
+  const selectedAsset = useMemo(() => (
+    category.items.find(item => item.name === assetName) || category.items[0]
+  ), [category, assetName]);
+
+  useEffect(() => {
+    setRequirementCounts(buildRequirementCounts(selectedAsset));
+  }, [selectedAsset]);
+
+  const postRequirements = useMemo(() => (
+    (selectedAsset?.posts || []).map(post => ({
+      post,
+      required: Math.max(1, Number(requirementCounts[post] || getPostRequirementCount(selectedAsset?.name, post))),
+    }))
+  ), [selectedAsset, requirementCounts]);
+
+  const totalRequired = useMemo(() => (
+    postRequirements.reduce((sum, item) => sum + item.required, 0)
+  ), [postRequirements]);
+
+  const baseOptions = useMemo(() => (
+    ["All", ...Array.from(new Set(rows.map(member => member.baseName).filter(Boolean))).sort()]
+  ), [rows]);
+
+  const nominationPool = useMemo(() => (
+    rows
+      .filter(member => baseName === "All" || member.baseName === baseName)
+      .sort((a, b) => String(a.surname).localeCompare(String(b.surname)))
+  ), [rows, baseName]);
+
+  const eligibleMembers = useMemo(() => {
+    const requestedStart = new Date(`${neededFrom}T00:00:00`);
+    return rows
+      .filter(member => {
+        const ready = String(member.readinessStatus).toLowerCase() === "ready";
+        const deployable = member.is_deployable === true;
+        const available = String(member.availabilityStatus || "Available").toLowerCase() === "available";
+        const availableFrom = new Date(`${member.availableFrom || neededFrom}T00:00:00`);
+        if (!(ready && deployable && available)) return false;
+        if (availableFrom > requestedStart) return false;
+        if (Number(member.maxDeploymentDays || 0) < Number(duration || 0)) return false;
+        if (deploymentType === "external" && member.is_area_bound) return false;
+        if (baseName !== "All" && member.baseName !== baseName) return false;
+        return true;
+      })
+      .sort((a, b) => String(a.surname).localeCompare(String(b.surname)));
+  }, [rows, neededFrom, duration, deploymentType, baseName]);
+
+  const suggestionsByPost = useMemo(() => {
+    const map = {};
+    postRequirements.forEach(({ post }) => {
+      map[post] = eligibleMembers
+        .map(member => {
+          const matchedPost = memberMatchesPost(member, post);
+          let score = matchedPost ? 10 : 0;
+          if (String(member.post_description || "").toLowerCase() === post.toLowerCase()) score += 4;
+          if (String(member.musteringCode || member.mustering_code || "").toLowerCase() === "c2" && /comms|mission|radar|telecommunications/i.test(post)) score += 2;
+          if (deploymentType === "external") {
+            const clearance = String(member.security_clearance || member.security_dearance || "").toLowerCase();
+            if (clearance.includes("secret")) score += 2;
+          }
+          return { ...member, matchScore: score };
+        })
+        .filter(member => member.matchScore > 0)
+        .sort((a, b) => b.matchScore - a.matchScore || String(a.surname).localeCompare(String(b.surname)))
+        .slice(0, 4);
+    });
+    return map;
+  }, [eligibleMembers, postRequirements, deploymentType]);
+
+  const assignedMembers = useMemo(() => (
+    Object.entries(assignments)
+      .flatMap(([post, forceNumbers]) => (
+        (Array.isArray(forceNumbers) ? forceNumbers : [forceNumbers])
+          .map(forceNumber => {
+            const member = rows.find(item => item.force_number === forceNumber);
+            return member ? { post, member } : null;
+          })
+          .filter(Boolean)
+      ))
+  ), [assignments, rows]);
+
+  const shortagePosts = useMemo(() => (
+    postRequirements.flatMap(({ post, required }) => {
+      const forceNumbers = assignments[post];
+      const filled = (Array.isArray(forceNumbers) ? forceNumbers : (forceNumbers ? [forceNumbers] : [])).length;
+      return filled >= required ? [] : [{ post, filled, required }];
+    })
+  ), [postRequirements, assignments]);
+
+  const deploymentIssues = useMemo(() => (
+    assignedMembers.flatMap(({ post, member }) => (
+      getDeploymentMemberIssues(member, { neededFrom, duration, deploymentType, baseName })
+        .map(issue => ({ post, member, issue }))
+    ))
+  ), [assignedMembers, neededFrom, duration, deploymentType, baseName]);
+
+  const readinessScore = useMemo(() => {
+    if (!totalRequired) return 0;
+    const fillScore = Math.round((assignedMembers.length / totalRequired) * 70);
+    const shortagePenalty = Math.min(20, shortagePosts.length * 4);
+    const issuePenalty = Math.min(35, deploymentIssues.length * 7);
+    return Math.max(0, Math.min(100, fillScore + 30 - shortagePenalty - issuePenalty));
+  }, [assignedMembers.length, totalRequired, shortagePosts.length, deploymentIssues.length]);
+
+  const updateRequirement = (post, value) => {
+    setRequirementCounts(prev => ({ ...prev, [post]: Math.max(1, Number(value || 1)) }));
+    setAssignments(prev => {
+      const current = getAssignedForPost(prev, post);
+      const limit = Math.max(1, Number(value || 1));
+      if (current.length <= limit) return prev;
+      return { ...prev, [post]: current.slice(0, limit) };
+    });
+  };
+
+  const assignMember = (post, forceNumber) => {
+    if (!forceNumber) return;
+    const requirement = postRequirements.find(item => item.post === post)?.required || 1;
+    setAssignments(prev => {
+      const current = getAssignedForPost(prev, post);
+      if (current.includes(forceNumber) || current.length >= requirement) return prev;
+      return { ...prev, [post]: [...current, forceNumber] };
+    });
+  };
+
+  const clearMember = (post, forceNumber) => {
+    setAssignments(prev => {
+      const next = { ...prev };
+      if (forceNumber) {
+        const current = (Array.isArray(next[post]) ? next[post] : [next[post]]).filter(Boolean);
+        const filtered = current.filter(item => item !== forceNumber);
+        if (filtered.length) next[post] = filtered; else delete next[post];
+      } else {
+        delete next[post];
+      }
+      return next;
+    });
+  };
+
+  const saveDeployment = (status = "Draft") => {
+    const deployment = {
+      id: `DEP-${Date.now()}`,
+      name: missionName.trim() || `${selectedAsset?.name || "Deployment"} ${deploymentType}`,
+      status,
+      readinessScore,
+      deploymentType,
+      category: category.label,
+      assetName: selectedAsset?.name || "",
+      assetRole: selectedAsset?.role || "",
+      baseName,
+      neededFrom,
+      duration: Number(duration || 0),
+      posts: selectedAsset?.posts || [],
+      postRequirements,
+      totalRequired,
+      assignments: assignedMembers.map(({ post, member }) => ({
+        post,
+        forceNumber: member.force_number,
+        name: `${member.rank} ${member.surname}, ${member.first_name}`,
+        baseName: member.baseName,
+        competency: member.post_description || member.musteringName,
+      })),
+      shortages: shortagePosts.map(({ post, filled, required }) => `${post} (${filled}/${required})`),
+      issues: deploymentIssues.map(({ post, member, issue }) => ({
+        post,
+        forceNumber: member.force_number,
+        name: `${member.rank} ${member.surname}`,
+        issue,
+      })),
+      auditTrail: [{
+        at: new Date().toISOString(),
+        action: `Deployment ${status}`,
+        actor: "Force Prep Commander",
+        detail: `${assignedMembers.length}/${totalRequired} posts filled, readiness score ${readinessScore}%`,
+      }],
+      createdAt: new Date().toISOString(),
+    };
+    onSaveDeployment(deployment);
+    setMissionName("");
+    setAssignments({});
+    onOpenBoard();
+  };
+
+  const canMoveNext = currentStep < wizardSteps.length - 1;
+  const canMoveBack = currentStep > 0;
+
+  return (
+    <div className="deployment-builder">
+      <section className="glass-card deployment-builder-hero">
+        <div>
+          <div className="hero-kicker">Force Prep Commander</div>
+          <div className="hero-title">Deployment Wizard</div>
+          <div className="hero-sub">Build the mission, confirm post quantities, nominate members, review conflicts, and submit a traceable nominal roll.</div>
+        </div>
+        <div className="deployment-toggle">
+          <Button variant={deploymentType === "internal" ? "primary" : "outline-light"} onClick={() => setDeploymentType("internal")}>Internal</Button>
+          <Button variant={deploymentType === "external" ? "primary" : "outline-light"} onClick={() => setDeploymentType("external")}>External</Button>
+        </div>
+      </section>
+
+      <section className="wizard-stepper">
+        {wizardSteps.map((step, index) => (
+          <button
+            key={step}
+            className={`wizard-step ${index === currentStep ? "active" : ""} ${index < currentStep ? "complete" : ""}`}
+            onClick={() => setCurrentStep(index)}
+          >
+            <span>{index + 1}</span>
+            <strong>{step}</strong>
+          </button>
+        ))}
+      </section>
+
+      {currentStep === 0 && (
+      <section className="glass-card deployment-form-panel">
+        <div className="deployment-form-grid">
+          <div>
+            <Form.Label>Mission Name</Form.Label>
+            <Form.Control value={missionName} onChange={(e) => setMissionName(e.target.value)} placeholder="e.g. Oryx external support task" />
+          </div>
+          <div>
+            <Form.Label>Asset Category</Form.Label>
+            <Form.Select value={categoryKey} onChange={(e) => setCategoryKey(e.target.value)}>
+              {Object.entries(ASSET_CATALOG).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
+            </Form.Select>
+          </div>
+          <div>
+            <Form.Label>Asset / Capability</Form.Label>
+            <Form.Select value={assetName} onChange={(e) => { setAssetName(e.target.value); setAssignments({}); }}>
+              {category.items.map(item => <option key={item.name} value={item.name}>{item.name}</option>)}
+            </Form.Select>
+          </div>
+          <div>
+            <Form.Label>Base / Station Preference</Form.Label>
+            <Form.Select value={baseName} onChange={(e) => setBaseName(e.target.value)}>
+              {baseOptions.map(base => <option key={base} value={base}>{base}</option>)}
+            </Form.Select>
+          </div>
+          <div>
+            <Form.Label>Needed From</Form.Label>
+            <Form.Control type="date" value={neededFrom} onChange={(e) => setNeededFrom(e.target.value)} />
+          </div>
+          <div>
+            <Form.Label>Duration</Form.Label>
+            <Form.Control type="number" min="1" max="180" value={duration} onChange={(e) => setDuration(e.target.value)} />
+          </div>
+        </div>
+        <div className="deployment-context">
+          <span>Selected: <strong>{selectedAsset?.name}</strong></span>
+          <span>Role: <strong>{selectedAsset?.role}</strong></span>
+          <span>Source Unit: <strong>{selectedAsset?.squadron}</strong></span>
+          <span>Eligible Members: <strong>{eligibleMembers.length}</strong></span>
+        </div>
+      </section>
+      )}
+
+      {currentStep === 1 && (
+      <section className="glass-card deployment-form-panel">
+        <div className="summary-card-header">
+          <h4>Role Quantity Template</h4>
+          <span className="summary-chip">{totalRequired} total posts</span>
+        </div>
+        <div className="requirement-editor-grid">
+          {postRequirements.map(({ post, required }) => (
+            <div className="requirement-editor-row" key={post}>
+              <span>
+                <strong>{post}</strong>
+                <small>{selectedAsset?.name} requirement</small>
+              </span>
+              <Form.Control
+                type="number"
+                min="1"
+                max="30"
+                value={required}
+                onChange={(event) => updateRequirement(post, event.target.value)}
+              />
+            </div>
+          ))}
+        </div>
+      </section>
+      )}
+
+      {(currentStep === 2 || currentStep === 3) && (
+      <section className="deployment-workspace">
+        <div className="glass-card post-fill-panel">
+          <div className="summary-card-header">
+            <h4>Required Posts</h4>
+            <span className="summary-chip">{assignedMembers.length}/{totalRequired} filled | {readinessScore}% score</span>
+          </div>
+          <div className="post-grid">
+            {postRequirements.map(({ post, required }) => {
+              const assignedForces = getAssignedForPost(assignments, post);
+              const assigned = assignedForces.map(force => rows.find(member => member.force_number === force)).filter(Boolean);
+              const suggestions = (suggestionsByPost[post] || []).filter(member => !assignedForces.includes(member.force_number));
+              const isFilled = assigned.length >= required;
+              return (
+                <div className={`post-card ${isFilled ? "is-filled" : ""}`} key={post}>
+                  <div className="post-card-header">
+                    <div>
+                      <strong>{post}</strong>
+                      <span>{assigned.length}/{required} filled</span>
+                    </div>
+                    {assigned.length > 0 && <Button variant="outline-light" size="sm" onClick={() => clearMember(post)}>Clear</Button>}
+                  </div>
+                  <Form.Select value="" disabled={isFilled} onChange={(event) => assignMember(post, event.target.value)}>
+                    <option value="">Nominate member...</option>
+                    {nominationPool.map(member => {
+                      const issues = getDeploymentMemberIssues(member, { neededFrom, duration, deploymentType, baseName });
+                      return (
+                      <option key={member.force_number} value={member.force_number}>
+                        {member.rank} {member.surname}, {member.first_name} - {member.post_description || member.musteringName}{issues.length ? ` (${issues[0]})` : ""}
+                      </option>
+                    );})}
+                  </Form.Select>
+
+                  {assigned.length > 0 && (
+                    <div className="assigned-chip-list">
+                      {assigned.map(member => {
+                        const issues = getDeploymentMemberIssues(member, { neededFrom, duration, deploymentType, baseName });
+                        return (
+                        <button key={member.force_number} className={`assigned-chip ${issues.length ? "has-issue" : ""}`} onClick={() => clearMember(post, member.force_number)}>
+                          {member.rank} {member.surname}
+                          {issues.length ? " !" : ""}
+                        </button>
+                      );})}
+                    </div>
+                  )}
+
+                  <div className="suggestion-list">
+                    {suggestions.map(member => (
+                      <button key={member.force_number} className="suggestion-row" disabled={isFilled} onClick={() => assignMember(post, member.force_number)}>
+                        <span>
+                          <strong>{member.rank} {member.surname}</strong>
+                          <small>{member.post_description || member.musteringName} | {member.baseName}</small>
+                        </span>
+                        <Badge bg="success">score {member.matchScore}</Badge>
+                      </button>
+                    ))}
+                    {!suggestions.length && <div className="text-muted">No combat-ready match for this post.</div>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="glass-card manifest-panel">
+          <div className="summary-card-header">
+            <h4>{currentStep === 3 ? "Review" : "Nominal Roll"}</h4>
+            <span className="summary-chip">{shortagePosts.length} open | {deploymentIssues.length} flags</span>
+          </div>
+          <div className="readiness-score-card">
+            <strong>{readinessScore}%</strong>
+            <span>Deployment readiness score</span>
+          </div>
+          <div className="manifest-list">
+            {assignedMembers.map(({ post, member }) => (
+              <button key={`${post}-${member.force_number}`} className="manifest-row" onClick={() => onOpen(member)}>
+                <span>
+                  <strong>{post}</strong>
+                  <small>{member.rank} {member.surname}, {member.first_name}</small>
+                </span>
+                <Badge bg="info">{member.force_number}</Badge>
+              </button>
+            ))}
+            {shortagePosts.map(({ post, filled, required }) => (
+              <div className="manifest-row manifest-shortage" key={post}>
+                <span><strong>{post}</strong><small>{filled}/{required} filled</small></span>
+                <Badge bg="warning" text="dark">Open</Badge>
+              </div>
+            ))}
+            {deploymentIssues.map(({ post, member, issue }) => (
+              <div className="manifest-row manifest-shortage" key={`${post}-${member.force_number}-${issue}`}>
+                <span><strong>{member.rank} {member.surname}</strong><small>{post}: {issue}</small></span>
+                <Badge bg="danger">Flag</Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      )}
+
+      <section className="wizard-actions">
+        <Button variant="outline-light" disabled={!canMoveBack} onClick={() => setCurrentStep(step => Math.max(0, step - 1))}>Back</Button>
+        <div>
+          <Button variant="outline-light" className="me-2" onClick={() => saveDeployment("Draft")}>Save Draft</Button>
+          {canMoveNext ? (
+            <Button variant="primary" onClick={() => setCurrentStep(step => Math.min(wizardSteps.length - 1, step + 1))}>Next</Button>
+          ) : (
+            <Button variant="primary" onClick={() => saveDeployment("Submitted")}>Submit</Button>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function DeploymentBoardPanel({ deployments, onStatusChange }) {
+  const columns = ["Draft", "Submitted", "Force Prep Review", "Commander Approved", "Active", "Completed", "Cancelled"];
+  return (
+    <div className="deployment-board">
+      <section className="glass-card deployment-builder-hero">
+        <div>
+          <div className="hero-kicker">Deployment Board</div>
+          <div className="hero-title">Mission Nominal Rolls</div>
+          <div className="hero-sub">Track drafts, approvals, active missions, and completed deployments.</div>
+        </div>
+      </section>
+      <section className="deployment-board-grid">
+        {columns.map(column => {
+          const items = deployments.filter(dep => dep.status === column);
+          return (
+            <div className="glass-card deployment-column" key={column}>
+              <div className="summary-card-header">
+                <h4>{column}</h4>
+                <span className="summary-chip">{items.length}</span>
+              </div>
+              <div className="deployment-card-list">
+                {items.map(dep => (
+                  <div className="deployment-card" key={dep.id}>
+                    <div className="deployment-card-title">
+                      <strong>{dep.name}</strong>
+                      <Badge bg={dep.shortages.length ? "warning" : "success"} text={dep.shortages.length ? "dark" : undefined}>
+                        {dep.assignments.length}/{dep.totalRequired || dep.posts.length}
+                      </Badge>
+                    </div>
+                    <div className="deployment-card-score">
+                      <span>Readiness</span>
+                      <strong>{dep.readinessScore ?? 0}%</strong>
+                    </div>
+                    <div className="deployment-card-meta">
+                      <span>{dep.assetName}</span>
+                      <span>{dep.deploymentType}</span>
+                      <span>{formatDate(dep.neededFrom)} | {dep.duration} days</span>
+                    </div>
+                    {dep.shortages.length > 0 && (
+                      <div className="deployment-shortages">Open: {dep.shortages.join(", ")}</div>
+                    )}
+                    {dep.issues?.length > 0 && (
+                      <div className="deployment-shortages">Flags: {dep.issues.slice(0, 2).map(item => item.issue).join(", ")}</div>
+                    )}
+                    <Form.Select size="sm" value={dep.status} onChange={(e) => onStatusChange(dep.id, e.target.value)}>
+                      {columns.map(status => <option key={status} value={status}>{status}</option>)}
+                    </Form.Select>
+                    {dep.auditTrail?.length > 0 && (
+                      <div className="deployment-card-meta">
+                        <span>Audit: {dep.auditTrail[dep.auditTrail.length - 1].action}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {!items.length && <div className="text-muted">No deployments.</div>}
+              </div>
+            </div>
+          );
+        })}
       </section>
     </div>
   );
@@ -1516,62 +2077,7 @@ function PersonnelOverview({ rows, onOpen, searchTerm, setSearchTerm, page, page
   );
 }
 
-function DonutChart({ size = 160, thickness = 14, segments = [], label, sublabel }) {
-  const radius = (size / 2) - (thickness / 2);
-  const circumference = 2 * Math.PI * radius;
-  const total = segments.reduce((s, x) => s + x.value, 0) || 1;
-  let acc = 0;
-  return (
-    <div className="donut-chart">
-      <svg width={size} height={size} className="chart-svg donut-svg">
-        <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
-          <circle
-            className="donut-track"
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="transparent"
-            stroke="rgba(255,255,255,0.08)"
-            strokeWidth={thickness}
-          />
-          {segments.map((seg, i) => {
-            const p = seg.value / total;
-            const dash = p * circumference;
-            const gap = circumference - dash;
-            const offset = -acc * circumference;
-            acc += p;
-            return (
-              <circle
-                key={i}
-                className="donut-segment-base"
-                cx={size / 2}
-                cy={size / 2}
-                r={radius}
-                fill="transparent"
-                stroke={seg.color}
-                strokeWidth={thickness}
-                strokeDasharray={`${dash} ${gap}`}
-                strokeDashoffset={offset}
-                strokeLinecap="round"
-              />
-            );
-          })}
-        </g>
-        <text className="donut-label" x="50%" y="48%" dominantBaseline="middle" textAnchor="middle" fill="#fff" fontSize="22" fontWeight="800">
-          {label}
-        </text>
-        {sublabel && (
-          <text className="donut-sublabel" x="50%" y="62%" dominantBaseline="middle" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="12">
-            {sublabel}
-          </text>
-        )}
-      </svg>
-    </div>
-  );
-}
-
-
-function OverviewPanel({ rows, onNavigate, onOpen }) {
+function OverviewPanel({ rows, deployments, onNavigate, onOpen }) {
   const total = rows.length;
   const ready = rows.filter(r => String(r.readinessStatus).toLowerCase() === 'ready').length;
   const pending = rows.filter(r => String(r.readinessStatus).toLowerCase() === 'pending').length;
@@ -1584,6 +2090,7 @@ function OverviewPanel({ rows, onNavigate, onOpen }) {
   )).length;
   const readyPct = total ? Math.round((ready / total) * 100) : 0;
   const availablePct = total ? Math.round((availableNow / total) * 100) : 0;
+  const activeDeployments = deployments.filter(dep => ["Submitted", "Force Prep Review", "Commander Approved", "Active"].includes(dep.status)).length;
 
   const readinessRows = [
     { label: "Ready", value: ready, tone: "ready" },
@@ -1642,7 +2149,8 @@ function OverviewPanel({ rows, onNavigate, onOpen }) {
           <div className="hero-sub">A force-preparation view of available personnel, base capacity, mustering coverage, and stand-in risk.</div>
         </div>
         <div className="command-actions">
-          <Button variant="primary" onClick={() => onNavigate("availability")}><FaUserCheck className="me-1" /> Find Deployable Members</Button>
+          <Button variant="primary" onClick={() => onNavigate("createDeployment")}><FaBolt className="me-1" /> Create Deployment</Button>
+          <Button variant="outline-light" onClick={() => onNavigate("deploymentBoard")}><FaClipboardList className="me-1" /> Board</Button>
           <Button variant="outline-light" onClick={() => exportPersonnelToCSV(rows, "staffsync_personnel.csv")} disabled={!rows.length}><FaFileExport className="me-1" /> Export</Button>
         </div>
       </section>
@@ -1653,6 +2161,7 @@ function OverviewPanel({ rows, onNavigate, onOpen }) {
           { label: "Combat Ready", value: `${readyPct}%`, icon: <FaBolt /> },
           { label: "Deployable", value: deployable, icon: <FaPlane /> },
           { label: "Available Now", value: availableNow, icon: <FaUserCheck /> },
+          { label: "Open Deployments", value: activeDeployments, icon: <FaClipboardList /> },
         ].map((metric) => (
           <div className="metric-tile" key={metric.label}>
             <span>{metric.icon}</span>
@@ -1667,18 +2176,12 @@ function OverviewPanel({ rows, onNavigate, onOpen }) {
           <h4>Combat Readiness Split</h4>
           <span className="summary-chip">{availablePct}% available now</span>
         </div>
-        <div className="readiness-layout">
-          <DonutChart
-            size={160}
-            thickness={13}
-            label={`${readyPct}%`}
-            sublabel="Ready"
-            segments={[
-              { value: ready, color: 'var(--ready-color)' },
-              { value: pending, color: 'var(--pending-color)' },
-              { value: notReady, color: 'var(--notready-color)' },
-            ]}
-          />
+        <div className="readiness-layout readiness-layout-flat">
+          <div className="readiness-score-summary">
+            <strong>{readyPct}%</strong>
+            <span>Combat ready</span>
+            <small>{ready} of {total} members</small>
+          </div>
           <div className="readiness-bars">
             {readinessRows.map(item => {
               const pct = total ? Math.round((item.value / total) * 100) : 0;
@@ -1780,6 +2283,7 @@ export default function DashboardPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 8;
+  const [deployments, setDeployments] = useState([]);
 
   const [viewItem, setViewItem] = useState(null);
 
@@ -1799,6 +2303,26 @@ export default function DashboardPage() {
     const reader = new FileReader();
     reader.onload = ev => { setProfilePic(ev.target.result); updateProfile({ photo: ev.target.result }); };
     reader.readAsDataURL(f);
+  };
+
+  const handleSaveDeployment = (deployment) => {
+    setDeployments(prev => [deployment, ...prev]);
+  };
+
+  const handleDeploymentStatusChange = (deploymentId, status) => {
+    setDeployments(prev => prev.map(dep => dep.id === deploymentId ? {
+      ...dep,
+      status,
+      auditTrail: [
+        ...(dep.auditTrail || []),
+        {
+          at: new Date().toISOString(),
+          action: `Status changed to ${status}`,
+          actor: "Force Prep Commander",
+          detail: `${dep.assignments.length}/${dep.totalRequired || dep.posts.length} posts filled`,
+        },
+      ],
+    } : dep));
   };
 
   if (isLoading) return <div className="loading-spinner">Loading...</div>;
@@ -1848,7 +2372,20 @@ export default function DashboardPage() {
       <main className="dashboard-main">
         <div className="glass-panel">
           {activeSection === "overview" && (
-            <OverviewPanel rows={rows} onNavigate={setActiveSection} onOpen={setViewItem} />
+            <OverviewPanel rows={rows} deployments={deployments} onNavigate={setActiveSection} onOpen={setViewItem} />
+          )}
+
+          {activeSection === "createDeployment" && (
+            <CreateDeploymentPanel
+              rows={rows}
+              onOpen={setViewItem}
+              onSaveDeployment={handleSaveDeployment}
+              onOpenBoard={() => setActiveSection("deploymentBoard")}
+            />
+          )}
+
+          {activeSection === "deploymentBoard" && (
+            <DeploymentBoardPanel deployments={deployments} onStatusChange={handleDeploymentStatusChange} />
           )}
 
           {activeSection === "availability" && (
