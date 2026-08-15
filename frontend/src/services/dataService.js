@@ -17,6 +17,55 @@ export async function fetchPersonnel() {
   const unitById = Object.fromEntries(uList.map(u => [u.id ?? u.unit_id, u]));
   const baseById = Object.fromEntries(bList.map(b => [b.id ?? b.base_id, b]));
 
+  const today = new Date();
+  const addDays = (days) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+  };
+  const getAvailability = (member) => {
+    const status = String(member.readinessStatus ?? member.readiness ?? "Ready").toLowerCase();
+    if (member.availabilityStatus || member.availableFrom || member.unavailableUntil) {
+      return {
+        availabilityStatus: member.availabilityStatus,
+        availableFrom: member.availableFrom,
+        unavailableUntil: member.unavailableUntil,
+        unavailableReason: member.unavailableReason,
+        maxDeploymentDays: member.maxDeploymentDays,
+      };
+    }
+    if (member.is_deployable && status === "ready") {
+      return {
+        availabilityStatus: "Available",
+        availableFrom: today.toISOString().slice(0, 10),
+        unavailableUntil: null,
+        unavailableReason: "",
+        maxDeploymentDays: 30 + ((member.member_id || 0) % 4) * 15,
+      };
+    }
+    const days = status === "pending" ? 10 + ((member.member_id || 0) % 3) * 7 : 30 + ((member.member_id || 0) % 4) * 14;
+    return {
+      availabilityStatus: "Unavailable",
+      availableFrom: addDays(days),
+      unavailableUntil: addDays(days),
+      unavailableReason: status === "pending" ? "Pending readiness clearance" : "Not combat ready",
+      maxDeploymentDays: 0,
+    };
+  };
+  const getCompetencies = (member) => {
+    const raw = [
+      member.post_description,
+      member.mustering_code,
+      member.musteringCode,
+      member.competency,
+      ...(Array.isArray(member.competencies) ? member.competencies : []),
+    ];
+    return raw
+      .flatMap((value) => String(value || "").split(","))
+      .map((value) => value.trim())
+      .filter(Boolean);
+  };
+
   return members.map(m => {
     const unitId = m.unitId ?? m.unit_id;
     const unit = unitById[unitId];
@@ -28,6 +77,9 @@ export async function fetchPersonnel() {
       || (mCode && mustByCode[mCode]?.name)
       || "—";
 
+    const availability = getAvailability(m);
+    const competencies = getCompetencies(m);
+
     return {
       ...m,
       musteringCode: mCode,
@@ -35,6 +87,8 @@ export async function fetchPersonnel() {
       unitName: unit?.name ?? m.unitName ?? "—",
       baseName: base?.name ?? m.baseName ?? "—",
       readinessStatus: m.readinessStatus ?? m.readiness ?? "Ready",
+      competencies,
+      ...availability,
     };
   });
 }

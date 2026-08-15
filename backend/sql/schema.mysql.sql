@@ -79,6 +79,37 @@ CREATE TABLE IF NOT EXISTS members (
   INDEX idx_members_unit (unit_id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS member_competencies (
+  competency_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  member_id INT NOT NULL,
+  competency_name VARCHAR(160) NOT NULL,
+  competency_level ENUM('Basic','Intermediate','Advanced','Instructor') NOT NULL DEFAULT 'Basic',
+  valid_until DATE NULL,
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  CONSTRAINT fk_competencies_member FOREIGN KEY (member_id) REFERENCES members(member_id)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  UNIQUE KEY uq_member_competency (member_id, competency_name),
+  INDEX idx_competency_name (competency_name),
+  INDEX idx_competency_valid_until (valid_until)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS member_availability (
+  availability_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  member_id INT NOT NULL,
+  status ENUM('Available','Unavailable','Committed','Leave','Course','Medical') NOT NULL DEFAULT 'Available',
+  starts_on DATE NOT NULL,
+  ends_on DATE NULL,
+  max_deployment_days INT NULL,
+  reason VARCHAR(255) NULL,
+  updated_by INT NULL,
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  CONSTRAINT fk_availability_member FOREIGN KEY (member_id) REFERENCES members(member_id)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  INDEX idx_availability_member_dates (member_id, starts_on, ends_on),
+  INDEX idx_availability_status_dates (status, starts_on, ends_on),
+  INDEX idx_availability_updated_by (updated_by)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS users (
   user_id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(100) NOT NULL UNIQUE,
@@ -283,4 +314,3 @@ FROM members;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-

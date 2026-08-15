@@ -3,11 +3,11 @@ import {
   Button, Image, Form, Table, InputGroup, FormControl, Badge, Modal
 } from "react-bootstrap";
 import {
-  FaSignOutAlt, FaBell, FaUserCircle, FaClipboardList, FaUsers, FaMapMarkedAlt,
-  FaTasks, FaBolt, FaSearch, FaFilter, FaFileExport, FaServer,
-  FaHourglassHalf, FaExclamationTriangle, FaPlane, FaLayerGroup
+  FaSignOutAlt, FaUserCircle, FaClipboardList, FaUsers, FaMapMarkedAlt,
+  FaBolt, FaSearch, FaFileExport, FaPlane, FaCalendarAlt,
+  FaUserCheck, FaExchangeAlt
 } from "react-icons/fa";
-import { GiRank3, GiCompass, GiSwordWound } from "react-icons/gi";
+import { GiRank3, GiCompass } from "react-icons/gi";
 import defaultProfile from "../assets/images/default-profile.png";
 import BasesGoogleMap from "../components/maps/BasesGoogleMap";
 import BasesOSMMap from "../components/maps/BasesOSMMap";
@@ -22,123 +22,230 @@ import saafGold from "../assets/images/saafGold.png";
 const getTierName = (tier) => ({1:"TIER 1 SYS_ADMIN",2:"TIER 2 COMMANDER",3:"TIER 3 DIRECTORATE",4:"TIER 4 LANA"}[tier] || "USER");
 const getTierBadgeColor = (tier) => ({1:"danger",2:"warning",3:"primary",4:"info"}[tier] || "dark");
 
-// Shared rank list for filters and profile
-const RANK_OPTIONS = [
-  "Gen", "Lt Gen", "Maj Gen", "Brig Gen", "Col", "Lt Col", "Maj", "Capt", "Lt", "2Lt",
-  "SCMWO", "CMWO", "MWO", "WO1", "WO2", "FSgt", "Sgt", "Cpl", "LCpl", "Amn",
-  "Mrs", "Mr", "Ms"
-];
+const formatDate = (value) => {
+  if (!value) return "Now";
+  const d = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
+};
 
-function QuickActionsPanel({ rows, onFilterChange, onExport, canExport }) {
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState({ mustering: [], rank: [], readiness: [] });
+const daysUntil = (value) => {
+  if (!value) return 0;
+  const target = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(target.getTime())) return 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.ceil((target - today) / 86400000));
+};
 
-  // Build dynamic options using mock sets
-  const filterOptions = useMemo(() => ({
-    mustering: (mockMusterings || []).map(m => m.code),
-    rank: RANK_OPTIONS,
-    readiness: ["Ready", "Pending", "Not Ready"],
-  }), []);
+const competencyTokens = (person) => (
+  person.competencies?.length
+    ? person.competencies
+    : String(person.post_description || "").split(",")
+).map((item) => String(item).trim()).filter(Boolean);
 
-  const toggle = (type, value) => {
-    setSelectedFilters((prev) => ({
-      ...prev,
-      [type]: prev[type].includes(value)
-        ? prev[type].filter((v) => v !== value)
-        : [...prev[type], value],
-    }));
-  };
+const matchesCompetency = (person, requiredSkill) => {
+  const skill = requiredSkill.trim().toLowerCase();
+  if (!skill) return true;
+  return competencyTokens(person).some((token) => token.toLowerCase().includes(skill));
+};
 
-  const reset = () => {
-    const empty = { mustering: [], rank: [], readiness: [] };
-    setSelectedFilters(empty);
-    onFilterChange(empty);
-  };
+const getUnitCategory = (unitName = "") => {
+  if (/2 Squadron|85 Combat Flying School|60 Squadron/i.test(unitName)) return "Combat Systems";
+  if (/15 Squadron|16 Squadron|17 Squadron|19 Squadron|22 Squadron|87 Helicopter/i.test(unitName)) return "Helicopter Systems";
+  if (/21 Squadron|28 Squadron|35 Squadron|41 Squadron|44 Squadron|C Flight|10 Squadron|10 Squadron/i.test(unitName)) return "Transport, Maritime & Reconnaissance";
+  if (/Central Flying|80 Air Navigation|Air Force College|Gymnasium|School|68 Air School/i.test(unitName)) return "Education, Training & Development";
+  if (/140 Squadron|142 Squadron|Airspace|Lowveld|Bushveld|Ellisras|JTAC|Terminal Attack|Command and Control/i.test(unitName)) return "Command and Control / Air Defence";
+  if (/500 Squadron|501 Squadron|502 Squadron|503 Squadron|504 Squadron|505 Squadron|506 Squadron|508 Squadron|514 Squadron|515 Squadron|516 Squadron|525 Squadron|526 Squadron|Police/i.test(unitName)) return "Security Services";
+  if (/Air Servicing|Air Depot|Deployment Support|Tactical Airfield|Mobile Communications|Rapid Deployment|Publications|Photographic|Auction|Band|Procurement|Telecommunications|Electronic Warfare|Cookery|Logistics/i.test(unitName)) return "Logistic Support Services";
+  if (/Intelligence|Reconnaissance/i.test(unitName)) return "Operational Support & Intelligence";
+  return "Base Support / Administration";
+};
 
-  // Local filtering to power "Export filtered"
-  const filteredRows = useMemo(() => {
-    if (!Array.isArray(rows)) return [];
-    let data = rows;
-    if (selectedFilters.mustering.length) {
-      data = data.filter(p => selectedFilters.mustering.includes(p.musteringCode || p.mustering_code || (p.musteringName ? p.musteringName.slice(0,2).toUpperCase() : "")));
-    }
-    if (selectedFilters.rank.length) {
-      data = data.filter(p => selectedFilters.rank.includes(p.rank));
-    }
-    if (selectedFilters.readiness.length) {
-      data = data.filter(p => selectedFilters.readiness.includes(p.readinessStatus));
-    }
-    return data;
-  }, [rows, selectedFilters]);
+const getUnitFunction = (unitName = "") => ({
+  "2 Squadron": "Air Superiority | Gripen C/D",
+  "15 Squadron": "Rotary | A109 LUH, BK 117, Oryx",
+  "15 Squadron - 'C' Flight": "Rotary | BK 117",
+  "16 Squadron": "Rotary Attack | Rooivalk",
+  "17 Squadron": "Rotary | A109 LUH, Oryx",
+  "19 Squadron": "Rotary | A109 LUH, Oryx",
+  "21 Squadron": "VIP Transport | BBJ, Falcon, Citation",
+  "22 Squadron": "Rotary / Maritime | Oryx, Super Lynx 300",
+  "28 Squadron": "Medium Transport | C-130B/BZ Hercules",
+  "35 Squadron": "Maritime | C47-TP Turbo Dakota",
+  "41 Squadron": "Light Transport | Caravan, King Air, PC-12",
+  "44 Squadron": "Light Transport | C 212 Aviocar",
+  "60 Squadron": "Heavy Transport",
+  "80 Air Navigation School": "Training | Air Navigation",
+  "85 Combat Flying School": "Training | Hawk Mk 120",
+  "87 Helicopter Flying School": "Training | A109 LUH, BK 117, Oryx",
+  "Central Flying School": "Training | PC-7 Mk II",
+  "Test Flight and Development Centre": "Logistic Support | Flight test and development",
+  "Air Force Command and Control School": "Training | C2, airspace control, telecommunications",
+  "Command and Control School": "Training | C2",
+  "SA Air Force College": "Training | Air power development",
+  "Rapid Deployment Air Operations Team 43": "Logistic Support | Deployable air operations",
+  "Rapid Deployment Air Operations Team 46": "Logistic Support | Deployable air operations",
+  "Mobile Communications Unit": "Logistic Support | Mobile C2 communications",
+  "92 Tactical Airfield Unit": "Logistic Support | Tactical airfield support",
+  "Airspace Control Unit": "Air Defence | Airspace control",
+  "Lowveld Airspace Control Sector": "Air Defence | Airspace sector control",
+  "Bushveld Airspace Control Sector": "Air Defence | Airspace sector control",
+  "Electronic Warfare Centre": "Logistic Support | EW capability",
+  "Joint Air Reconnaissance Intelligence Centre": "Operational Support & Intelligence",
+  "SAAF Telecommunications Centre": "Logistic Support | Telecommunications",
+  "SAAF Police": "Security Services",
+  "SAAF Band": "Logistic Support | Ceremonial",
+  "School of Cookery": "Training | Catering support",
+})[unitName] || getUnitCategory(unitName);
 
-  return (
-    <div className="glass-card quick-actions-panel">
-      <h4><FaBolt className="me-2" />Quick Actions</h4>
+const ASSET_CATALOG = {
+  aircraft: {
+    label: "Current Aircraft",
+    type: "SAAF Aircraft",
+    icon: FaPlane,
+    items: [
+      { name: "Oryx", role: "Utility helicopter", squadron: "15, 17, 19, 22 Sqn", posts: ["Pilot Commander", "Co-Pilot", "Armourer", "Aircraft Mechanics", "Avionics", "MSC Tech"] },
+      { name: "A109 LUH", role: "Utility helicopter", squadron: "15, 17, 19 Sqn", posts: ["Pilot or Navigator", "Co-Pilot", "Aircraft Mechanic", "Mission Commander"] },
+      { name: "BK 117", role: "Utility helicopter", squadron: "15 Sqn / 87 HFS", posts: ["Pilot or Navigator", "Co-Pilot", "Aircraft Mechanic", "Medic"] },
+      { name: "Rooivalk", role: "Attack helicopter", squadron: "16 Sqn", posts: ["Pilot or Navigator", "Weapons Systems Operator", "Aircraft Mechanic", "Armourer"] },
+      { name: "Super Lynx 300", role: "Maritime / ASW helicopter", squadron: "22 Sqn", posts: ["Pilot or Navigator", "Co-Pilot", "Electronic Warfare", "Aircraft Mechanic"] },
+      { name: "Gripen C", role: "Multi-role fighter", squadron: "2 Sqn", posts: ["Pilot or Navigator", "Aircraft Mechanic", "Armourer", "Mission Control"] },
+      { name: "Gripen D", role: "Multi-role fighter / trainer", squadron: "2 Sqn", posts: ["Pilot or Navigator", "Co-Pilot", "Aircraft Mechanic", "Armourer"] },
+      { name: "C-130B/BZ Hercules", role: "Medium transport", squadron: "28 Sqn", posts: ["Pilot or Navigator", "Co-Pilot", "Flight Engineer", "Loadmaster", "Aircraft Mechanic"] },
+      { name: "C47-TP Turbo Dakota", role: "Light transport", squadron: "35 Sqn", posts: ["Pilot or Navigator", "Co-Pilot", "Flight Engineer", "Aircraft Mechanic"] },
+      { name: "C 212 Aviocar", role: "Light transport", squadron: "44 Sqn", posts: ["Pilot or Navigator", "Co-Pilot", "Aircraft Mechanic", "Loadmaster"] },
+      { name: "208 Caravan", role: "Light transport", squadron: "41 Sqn", posts: ["Pilot or Navigator", "Co-Pilot", "Aircraft Mechanic"] },
+      { name: "PC-12", role: "Light transport", squadron: "41 Sqn", posts: ["Pilot or Navigator", "Co-Pilot", "Aircraft Mechanic"] },
+      { name: "B200C Super King Air", role: "Transport", squadron: "41 Sqn", posts: ["Pilot or Navigator", "Co-Pilot", "Aircraft Mechanic"] },
+      { name: "300 Super King Air", role: "Transport", squadron: "41 Sqn", posts: ["Pilot or Navigator", "Co-Pilot", "Aircraft Mechanic"] },
+      { name: "PC-7 Mk II Astra", role: "Training", squadron: "Central Flying School", posts: ["Pilot or Navigator", "Instructor", "Aircraft Mechanic"] },
+      { name: "Hawk Mk 120", role: "Training", squadron: "85 CFS / TFDC", posts: ["Pilot or Navigator", "Instructor", "Aircraft Mechanic", "Armourer"] },
+      { name: "Boeing 737-7ED BBJ", role: "VIP transport", squadron: "21 Sqn", posts: ["Pilot or Navigator", "Co-Pilot", "Aircraft Mechanic", "VIP protector"] },
+      { name: "Falcon 50", role: "VIP transport", squadron: "21 Sqn", posts: ["Pilot or Navigator", "Co-Pilot", "Aircraft Mechanic", "VIP protector"] },
+      { name: "Falcon 900B", role: "VIP transport", squadron: "21 Sqn", posts: ["Pilot or Navigator", "Co-Pilot", "Aircraft Mechanic", "VIP protector"] },
+      { name: "550/1 Citation II", role: "VIP transport", squadron: "21 Sqn", posts: ["Pilot or Navigator", "Co-Pilot", "Aircraft Mechanic", "VIP protector"] },
+    ],
+  },
+  land: {
+    label: "Ground Support Vehicles",
+    type: "Airfield / Base Support",
+    icon: FaMapMarkedAlt,
+    items: [
+      { name: "Supreme Buffalo 6x6 Fire Tender", role: "Emergency response", squadron: "Base Support / Fire Section", posts: ["Driver", "Fire Fighter", "Vehicle Mechanic"] },
+      { name: "Supreme Buffalo 8x8 Fire Tender", role: "Emergency response", squadron: "Base Support / Fire Section", posts: ["Driver", "Fire Fighter", "Vehicle Mechanic"] },
+      { name: "Bush Panther 6x6 Fire Tender", role: "Emergency response", squadron: "Base Support / Fire Section", posts: ["Driver", "Fire Fighter", "Vehicle Mechanic"] },
+      { name: "Bush Panther 8x8 Fire Tender", role: "Emergency response", squadron: "Base Support / Fire Section", posts: ["Driver", "Fire Fighter", "Vehicle Mechanic"] },
+      { name: "Cobra 6x6 Fire Tender", role: "Emergency response", squadron: "Base Support / Fire Section", posts: ["Driver", "Fire Fighter", "Vehicle Mechanic"] },
+      { name: "Jumbo Cheetah 4x4 Fire Tender", role: "Emergency response", squadron: "Base Support / Fire Section", posts: ["Driver", "Fire Fighter", "Vehicle Mechanic"] },
+      { name: "Mercedes Rescue Vehicle", role: "Emergency rescue", squadron: "Base Support / Fire Section", posts: ["Driver", "Fire Fighter", "Vehicle Mechanic"] },
+      { name: "Magirus Response Vehicle", role: "Emergency response", squadron: "Base Support / Fire Section", posts: ["Driver", "Fire Fighter", "Vehicle Mechanic"] },
+      { name: "Nissan Emergency Bakkie", role: "Emergency response", squadron: "Base Support / Fire Section", posts: ["Driver", "Fire Fighter"] },
+      { name: "Mercedes Fuel Bowser", role: "Aviation fuel support", squadron: "Air Servicing Unit", posts: ["Driver", "Vehicle Mechanic", "Storeman", "Fire Fighter"] },
+      { name: "Aircraft Tug", role: "Aircraft ground movement", squadron: "Air Servicing Unit", posts: ["Driver", "Aircraft Mechanic", "Flightline Controller"] },
+      { name: "Clark Tractor", role: "Ground handling", squadron: "Air Servicing Unit", posts: ["Driver", "Vehicle Mechanic", "Aircraft Mechanic"] },
+      { name: "Ford Tractor", role: "Ground handling", squadron: "Air Servicing Unit", posts: ["Driver", "Vehicle Mechanic", "Aircraft Mechanic"] },
+      { name: "Bomb Loader", role: "Weapons loading support", squadron: "Armament / Weapons Section", posts: ["Armourer", "Driver", "Aircraft Mechanic"] },
+      { name: "SAMIL 20", role: "Security / light support", squadron: "Security Services", posts: ["Driver", "Vehicle Mechanic", "Military Police"] },
+      { name: "TC 4", role: "Troop / utility vehicle", squadron: "Ground support", posts: ["Driver", "Vehicle Mechanic", "Logcell", "Military Police"] },
+      { name: "TC 2", role: "Troop / utility vehicle", squadron: "Ground support", posts: ["Driver", "Vehicle Mechanic", "Logcell"] },
+      { name: "SAMIL 100", role: "Heavy logistics truck", squadron: "Logistics", posts: ["Driver", "Vehicle Mechanic", "Storeman", "Logcell"] },
+      { name: "Kwe", role: "Protected mobility / support", squadron: "Protection", posts: ["Driver", "Vehicle Mechanic", "Access Control", "VIP protector"] },
+    ],
+  },
+  deployment: {
+    label: "Deployment Support",
+    type: "18 DSU / Mobile Deployment",
+    icon: FaClipboardList,
+    items: [
+      { name: "Low-bed Trailer", role: "Heavy equipment movement", squadron: "18 Deployment Support Unit", posts: ["Driver", "Vehicle Mechanic", "Logcell", "Storeman"] },
+      { name: "10 t Truck", role: "Deployable transport", squadron: "18 Deployment Support Unit", posts: ["Driver", "Vehicle Mechanic", "Logcell"] },
+      { name: "20 t Truck", role: "Deployable transport", squadron: "18 Deployment Support Unit", posts: ["Driver", "Vehicle Mechanic", "Logcell"] },
+      { name: "30 t Truck", role: "Heavy deployable transport", squadron: "18 Deployment Support Unit", posts: ["Driver", "Vehicle Mechanic", "Logcell"] },
+      { name: "Water Tanker", role: "Field water sustainment", squadron: "18 Deployment Support Unit", posts: ["Driver", "Vehicle Mechanic", "Logcell", "Storeman"] },
+      { name: "Light Pick-up Vehicle", role: "Light field movement", squadron: "18 Deployment Support Unit", posts: ["Driver", "Vehicle Mechanic", "Logcell"] },
+      { name: "Trailer Fleet", role: "Field stores movement", squadron: "18 Deployment Support Unit", posts: ["Driver", "Vehicle Mechanic", "Storeman"] },
+      { name: "Mobile Pantry", role: "Deployable feeding support", squadron: "18 Deployment Support Unit", posts: ["Catering", "Storeman", "Driver"] },
+      { name: "Containerised Refrigerated Facility", role: "Cold-chain field stores", squadron: "18 Deployment Support Unit", posts: ["Storeman", "Catering", "Driver", "Vehicle Mechanic"] },
+      { name: "Mobile Toilets", role: "Field sanitation", squadron: "18 Deployment Support Unit", posts: ["Logcell", "Storeman", "Driver"] },
+      { name: "Tentage and Bedding Pack", role: "Deployable accommodation", squadron: "18 Deployment Support Unit", posts: ["Storeman", "Logcell", "Driver"] },
+      { name: "Field Kitchen and Mess Capability", role: "Sustainment and feeding", squadron: "18 Deployment Support Unit", posts: ["Catering", "Storeman", "Procurement", "Driver"] },
+      { name: "Freezer and Basic Stores Pack", role: "Field stores sustainment", squadron: "18 Deployment Support Unit", posts: ["Storeman", "Catering", "Logcell"] },
+    ],
+  },
+  uav: {
+    label: "UAV / Reconnaissance",
+    type: "Reconnaissance / Targeting",
+    icon: FaUserCheck,
+    items: [
+      { name: "Seeker 400", role: "Reconnaissance / utility UAV", squadron: "10 Sqn", posts: ["UAV Operator", "Mission Control", "Electronic Warfare", "Int", "Software Engineer"] },
+      { name: "Tactical Mini UAV", role: "Forward reconnaissance", squadron: "Deployable detachment", posts: ["UAV Operator", "Int", "Electronic Warfare", "Comms"] },
+      { name: "Training UAV", role: "Operator training", squadron: "Training", posts: ["UAV Operator", "Instructor", "Software Engineer"] },
+    ],
+  },
+  assets: {
+    label: "Air Defence & C2 Assets",
+    type: "Command and Control",
+    icon: FaClipboardList,
+    items: [
+      { name: "Mobile Radar", role: "Air picture / surveillance", squadron: "Radar / C2", posts: ["Radar", "Mission Control", "Comms", "Electronic Warfare"] },
+      { name: "Air Defence Radar", role: "Air defence sensor", squadron: "C2", posts: ["Radar", "Mission Control", "Electronic Warfare", "Software Engineer"] },
+      { name: "Deployable Comms Node", role: "Command communications", squadron: "C2 / Comms", posts: ["Telecommunications Operator", "Comms", "Mission Control", "Software Engineer"] },
+      { name: "Mobile Operations Centre", role: "Forward command post", squadron: "C2", posts: ["Mission Control", "OPS", "Telecommunications Operator", "Comms", "Int"] },
+      { name: "Ground Support Equipment", role: "Flightline support", squadron: "Air servicing", posts: ["Aircraft Mechanic", "Flight Engineer", "Storeman"] },
+      { name: "Field Catering Pack", role: "Sustainment", squadron: "Supply support", posts: ["Catering", "Storeman", "Procurement"] },
+    ],
+  },
+};
 
-      <div className="d-grid gap-2 mb-3">
-        <Button variant="outline-light" size="sm" onClick={() => setShowFilters((s) => !s)}>
-          <FaFilter className="me-1" /> {showFilters ? "Hide Filters" : "Show Filters"}
-        </Button>
-        <Button variant="outline-light" size="sm" onClick={() => onExport(filteredRows.length ? filteredRows : rows)} disabled={!canExport}>
-          <FaFileExport className="me-1" /> Export {filteredRows.length ? `(${filteredRows.length})` : "All"}
-        </Button>
-      </div>
+const postAliases = {
+  "Pilot Commander": ["pilot", "navigator", "mission commander"],
+  "Pilot or Navigator": ["pilot", "navigator"],
+  "Co-Pilot": ["pilot", "navigator", "co-pilot"],
+  "Aircraft Engineer": ["aircraft mechanic", "aeronotical engineer", "flight engineer"],
+  "Aircraft Mechanic": ["aircraft mechanic", "motor mechanic", "flight engineer"],
+  "Aircraft Mechanics": ["aircraft mechanic", "aircraft mechanics", "flight engineer", "motor mechanic"],
+  "Avionics": ["avionics", "electronic warfare", "comms", "radar", "software engineer"],
+  "MSC Tech": ["msc tech", "aircraft mechanic", "flight engineer", "storeman", "technical"],
+  "Telecommunications Operator": ["telecommunications operator", "telecommunications", "comms", "mission control"],
+  "Flight Engineer": ["flight engineer", "aircraft mechanic"],
+  "Mission Commander": ["mission control", "ops", "career management"],
+  "Weapons Systems Operator": ["armourer", "electronic warfare", "mission control"],
+  "Loadmaster": ["storeman", "logcell", "procurement"],
+  "Medic": ["fire fighter", "catering"],
+  "Driver": ["driver", "military police", "access control"],
+  "Vehicle Mechanic": ["motor mechanic", "aircraft mechanic"],
+  "UAV Operator": ["int", "electronic warfare", "software engineer", "mission control"],
+  "Flightline Controller": ["aircraft mechanic", "flight engineer", "mission control"],
+};
 
-      {showFilters && (
-        <div className="filter-section">
-          {Object.entries(filterOptions).map(([type, options]) => (
-            <div key={type} className="filter-group mb-2">
-              <div className="d-flex justify-content-between align-items-center mb-1">
-                <div className="filter-title">{type[0].toUpperCase() + type.slice(1)}</div>
-                <div className="d-flex gap-2">
-                  <Button variant="outline-secondary" size="sm" onClick={() => setSelectedFilters(prev => ({ ...prev, [type]: options.slice() }))}>All</Button>
-                  <Button variant="outline-secondary" size="sm" onClick={() => setSelectedFilters(prev => ({ ...prev, [type]: [] }))}>Clear</Button>
-                </div>
-              </div>
-              <div className="filter-options d-flex gap-3 flex-wrap">
-                {options.map((opt) => (
-                  <Form.Check
-                    key={opt}
-                    type="checkbox"
-                    id={`${type}-${opt}`}
-                    label={type === 'mustering' ? `${opt} — ${(mockMusterings || []).find(m => m.code === opt)?.name || ''}` : opt}
-                    checked={selectedFilters[type].includes(opt)}
-                    onChange={() => toggle(type, opt)}
-                    className="filter-checkbox"
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-          <div className="d-flex justify-content-between mt-3">
-            <Button variant="outline-secondary" size="sm" onClick={reset}>Reset</Button>
-            <Button variant="primary" size="sm" onClick={() => onFilterChange(selectedFilters)}>Apply</Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+const memberMatchesPost = (member, post) => {
+  const haystack = competencyTokens(member).join(" ").toLowerCase();
+  const aliases = [post, ...(postAliases[post] || [])].map(item => item.toLowerCase());
+  return aliases.some(alias => haystack.includes(alias) || alias.includes(haystack));
+};
 
 function SidebarNavigation({ active, onNavigate }) {
   const item = (key, label, Icon) => (
     <li className="nav-item">
-      <a
-        href="#"
+      <button
+        type="button"
         className={`nav-link ${active === key ? "active" : ""}`}
-        onClick={(e) => { e.preventDefault(); onNavigate(key); }}
+        onClick={() => onNavigate(key)}
       >
         <Icon className="nav-icon" /> {label}
-      </a>
+      </button>
     </li>
   );
   return (
     <ul className="sidebar-nav glass-card">
-      {item("overview", "Overview", GiCompass)}
-      {item("personnel", "Personnel", GiCompass)}
+      {item("overview", "Force Prep", GiCompass)}
+      {item("availability", "Deployment", FaUserCheck)}
+      {item("assets", "Assets", FaPlane)}
+      {item("personnel", "Muster Roll", GiCompass)}
       {item("mustering", "Mustering", FaClipboardList)}
       {item("bases", "Bases", FaMapMarkedAlt)}
-      {item("units", "Units", FaUsers)}
+      {item("units", "SAAF Units", FaUsers)}
       {item("profile", "My Profile", FaUserCircle)}
     </ul>
   );
@@ -181,7 +288,7 @@ function MusteringPanel({ rows, onRowsChange }) {
 
   return (
     <div id="mustering" className="glass-card">
-      <h4><FaClipboardList className="me-2" />Musterings</h4>
+      <h4><FaClipboardList className="me-2" />Mustering and Proficiency</h4>
 
       {/* Quick Actions for Mustering */}
       <div className="d-flex flex-wrap gap-2 mb-3 qa-bar">
@@ -194,9 +301,10 @@ function MusteringPanel({ rows, onRowsChange }) {
         <div className="mst-row mst-header">
           <div className="mst-col name">Mustering</div>
           <div className="mst-col posts">Posts</div>
+          <div className="mst-col total">Ready</div>
           <div className="mst-col deploy">Deployable</div>
           <div className="mst-col total">Total Members</div>
-          <div className="mst-col chart">Combat Readiness over Time</div>
+          <div className="mst-col chart">Availability</div>
         </div>
         {musterings.map(m => {
           const code = m.code;
@@ -216,9 +324,12 @@ function MusteringPanel({ rows, onRowsChange }) {
           const deployable = filteredMembers.filter(p => p.is_deployable).length;
           const total = filteredMembers.length;
           const ready = filteredMembers.filter(p => String(p.readinessStatus).toLowerCase() === 'ready').length;
-          const pending = filteredMembers.filter(p => String(p.readinessStatus).toLowerCase() === 'pending').length;
-          const notReady = filteredMembers.filter(p => String(p.readinessStatus).toLowerCase() === 'not ready').length;
-          const trend = [ready, ready + Math.round(pending/2), ready + pending, Math.max(ready - Math.round(notReady/3), 0), Math.max(ready - Math.round(notReady/4) + Math.round(pending/3), 0)];
+          const availableCount = filteredMembers.filter(p => (
+            p.is_deployable === true
+            && String(p.readinessStatus).toLowerCase() === 'ready'
+            && String(p.availabilityStatus || 'Available').toLowerCase() === 'available'
+          )).length;
+          const availablePct = total ? Math.round((availableCount / total) * 100) : 0;
           return (
             <div key={code} className="mst-row">
               <div className="mst-col name">
@@ -231,9 +342,15 @@ function MusteringPanel({ rows, onRowsChange }) {
                   {s.posts.map(p => (<option key={p} value={p}>{p}</option>))}
                 </Form.Select>
               </div>
+              <div className="mst-col total">{ready}</div>
               <div className="mst-col deploy">{deployable}</div>
               <div className="mst-col total">{total}</div>
-              <div className="mst-col chart"><Sparkline data={trend} width={220} height={50} color="#1e90ff" /></div>
+              <div className="mst-col chart">
+                <div className="capacity-bar" aria-label={`${availablePct}% available`}>
+                  <span style={{ width: `${availablePct}%` }} />
+                </div>
+                <small>{availableCount} available</small>
+              </div>
             </div>
           );
         })}
@@ -363,6 +480,9 @@ function BasesGlobeCard({ rows }) {
     'AFB Ysterplaat': { lat: -33.90, lon: 18.50 },
     'AFB Hoedspruit': { lat: -24.36, lon: 31.05 },
     'AFB Langebaanweg': { lat: -32.97, lon: 18.16 },
+    'AFB Durban': { lat: -29.97, lon: 30.95 },
+    'AFS Port Elizabeth': { lat: -33.98, lon: 25.61 },
+    'AFB Overberg': { lat: -34.55, lon: 20.25 },
   };
 
   // South Africa bounding box for projection
@@ -438,7 +558,12 @@ function BasesGlobeCard({ rows }) {
 
   return (
     <div className="glass-card globe-card">
-      <h4 className="mb-2">Bases — South Africa</h4>
+      <div className="locations-title-row">
+        <div>
+          <h4 className="mb-1">South Africa Air Bases</h4>
+          <div className="text-muted">Dark terrain fallback with operational readiness markers.</div>
+        </div>
+      </div>
       <svg
         ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
@@ -450,36 +575,49 @@ function BasesGlobeCard({ rows }) {
         onMouseLeave={endPan}
       >
         <defs>
-          <radialGradient id="glow" cx="50%" cy="45%" r="60%">
-            <stop offset="0%" stopColor="#1a1f2a" />
-            <stop offset="70%" stopColor="#0f141b" />
-            <stop offset="100%" stopColor="#0b0f14" />
+          <radialGradient id="glow" cx="48%" cy="35%" r="72%">
+            <stop offset="0%" stopColor="#172d38" />
+            <stop offset="64%" stopColor="#0a141b" />
+            <stop offset="100%" stopColor="#05090d" />
           </radialGradient>
-          <linearGradient id="grid" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.08)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
+          <linearGradient id="landShade" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stopColor="#1e4752" />
+            <stop offset="48%" stopColor="#17323c" />
+            <stop offset="100%" stopColor="#0b1a22" />
           </linearGradient>
+          <pattern id="terrainGrid" width="34" height="34" patternUnits="userSpaceOnUse">
+            <path d="M 34 0 L 0 0 0 34" fill="none" stroke="rgba(120,190,210,0.08)" strokeWidth="1" />
+          </pattern>
           <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="8" stdDeviation="12" floodOpacity="0.35" floodColor="#000" />
+            <feDropShadow dx="0" dy="18" stdDeviation="18" floodOpacity="0.55" floodColor="#000" />
+          </filter>
+          <filter id="markerLift" x="-100%" y="-100%" width="300%" height="300%">
+            <feDropShadow dx="0" dy="9" stdDeviation="6" floodOpacity="0.58" floodColor="#000" />
           </filter>
         </defs>
 
         <g transform={`translate(${tx} ${ty}) scale(${scale})`}>
-          {/* map background */}
           <rect x="0" y="0" width={W} height={H} fill="url(#glow)" />
-          {/* South Africa silhouette */}
-          <path d={saPath} fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.22)" strokeWidth="1.2" filter="url(#softShadow)" />
+          <rect x="0" y="0" width={W} height={H} fill="url(#terrainGrid)" opacity="0.9" />
+          <ellipse cx={W / 2} cy={H - 24} rx="230" ry="24" fill="rgba(0,0,0,0.34)" />
+          <path d={saPath} transform="translate(10 14)" fill="#061016" opacity="0.82" />
+          <path d={saPath} transform="translate(5 7)" fill="#0b1b22" opacity="0.95" />
+          <path d={saPath} fill="url(#landShade)" stroke="rgba(126,214,232,0.55)" strokeWidth="1.4" filter="url(#softShadow)" />
+          <path d={saPath} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="5" />
 
-          {/* markers */}
           {bases.map((b) => {
             const c = coords[b.name];
             if (!c) return null;
             const { x, y } = project(c.lon, c.lat);
+            const labelOffset = {
+              'AFB Waterkloof': { dx: 18, dy: -34 },
+              'AFB Swartkop': { dx: 18, dy: 18 },
+            }[b.name];
             // leader line direction points outward from centroid of silhouette
             const centerX = W/2, centerY = H/2;
             const angle = Math.atan2(y - centerY, x - centerX);
-            const lx = x + 12 * Math.cos(angle);
-            const ly = y + 12 * Math.sin(angle);
+            const lx = labelOffset ? x + labelOffset.dx : x + 12 * Math.cos(angle);
+            const ly = labelOffset ? y + labelOffset.dy : y + 12 * Math.sin(angle);
             const info = countsByReady[b.name] || { total: 0, Ready: 0, Pending: 0, 'Not Ready': 0 };
             return (
             <g
@@ -489,11 +627,12 @@ function BasesGlobeCard({ rows }) {
               onMouseEnter={() => setHovered(b.name)}
               onMouseLeave={() => setHovered(null)}
             >
-              {hovered === b.name || selected === b.name ? (
-                <circle cx={x} cy={y} r={9} fill="none" stroke="#00e676" strokeWidth="2" opacity="0.9" />
-              ) : null}
-              <circle cx={x} cy={y} r={6} fill={hovered === b.name || selected === b.name ? '#00e676' : '#30d158'} stroke="#0b0f14" strokeWidth="2" filter="url(#softShadow)" />
-              <line x1={x} y1={y} x2={lx} y2={ly} stroke="rgba(255,255,255,0.25)" />
+              <line x1={x} y1={y + 20} x2={x} y2={y + 5} stroke="rgba(94,234,212,0.52)" strokeWidth="2" />
+              <ellipse cx={x} cy={y + 22} rx="14" ry="5" fill="rgba(0,0,0,0.38)" />
+              <circle cx={x} cy={y} r={hovered === b.name || selected === b.name ? 15 : 12} fill="rgba(79,195,247,0.18)" stroke="rgba(129,212,250,0.25)" />
+              <circle cx={x} cy={y} r="6.5" fill={hovered === b.name || selected === b.name ? '#80deea' : '#4fc3f7'} stroke="#071016" strokeWidth="2" filter="url(#markerLift)" />
+              <circle cx={x - 2} cy={y - 2} r="2.2" fill="rgba(255,255,255,0.85)" />
+              <line x1={x} y1={y} x2={lx} y2={ly} stroke="rgba(180,230,245,0.35)" />
               <text x={lx + 6} y={ly + 4} fill="#fff" fontSize="12" className="marker-label" style={{ fontWeight: hovered === b.name || selected === b.name ? 700 : 500 }}>{b.name}</text>
               <title>{`${b.name}\nTotal: ${info.total}\nReady: ${info.Ready}  Pending: ${info.Pending}  Not Ready: ${info['Not Ready']}`}</title>
             </g>
@@ -520,49 +659,7 @@ function BasesGlobeCard({ rows }) {
 }
 
 function BasesPanel({ rows }) {
-  const bases = mockBases || [];
-
-  // Count members per base name
-  const countsByBase = useMemo(() => (
-    rows.reduce((acc, p) => {
-      const name = p.baseName || "Unknown";
-      acc[name] = (acc[name] || 0) + 1;
-      return acc;
-    }, {})
-  ), [rows]);
-
   const [selectedBase, setSelectedBase] = useState(null);
-
-  const membersAtBase = useMemo(() => {
-    if (!selectedBase) return [];
-    return rows.filter(p => (p.baseName || "Unknown") === selectedBase);
-  }, [rows, selectedBase]);
-
-  // Group by mustering for this base
-  const musteringCounts = useMemo(() => {
-    const by = {};
-    for (const p of membersAtBase) {
-      const key = p.musteringName || p.mustering_code || "Unknown";
-      by[key] = (by[key] || 0) + 1;
-    }
-    return Object.entries(by).sort((a,b) => b[1]-a[1]);
-  }, [membersAtBase]);
-
-  // Group by readiness for this base
-  const readinessCounts = useMemo(() => {
-    const by = {};
-    for (const p of membersAtBase) {
-      const key = p.readinessStatus || "Unknown";
-      by[key] = (by[key] || 0) + 1;
-    }
-    // Preserve a consistent order
-    const order = ["Ready", "Pending", "Not Ready", "Unknown"]; 
-    const sorted = Object.entries(by).sort((a,b) => order.indexOf(a[0]) - order.indexOf(b[0]));
-    return sorted;
-  }, [membersAtBase]);
-
-  const maxMust = Math.max(1, ...musteringCounts.map(([,v]) => v));
-  const maxReady = Math.max(1, ...readinessCounts.map(([,v]) => v));
 
   // Detailed readiness counts per base (for the summary banner)
   const countsByBaseDetailed = useMemo(() => {
@@ -584,11 +681,14 @@ function BasesPanel({ rows }) {
     'AFB Ysterplaat': 'Maritime/heli support',
     'AFB Hoedspruit': 'Limpopo air ops & support',
     'AFB Langebaanweg': 'Pilot training (PC-7 MkII)',
+    'AFB Durban': 'Coastal support & air movement',
+    'AFS Port Elizabeth': 'Eastern Cape air support',
+    'AFB Overberg': 'TFDC: test, development & evaluation',
   };
 
   return (
     <div id="bases" className="glass-card">
-      <h4><FaMapMarkedAlt className="me-2" />Bases</h4>
+      <h4><FaMapMarkedAlt className="me-2" />Current SAAF Bases and Stations</h4>
 
       {/* Google vector/tilt map (with fallback to SVG if key is missing) */}
       {/* Try Google Maps if API key present; otherwise OSM (Leaflet) fallback, then globe */}
@@ -620,18 +720,29 @@ function BasesPanel({ rows }) {
 }
 
 function UnitsPanel({ rows }) {
-  const units = mockUnits || [];
-  const bases = mockBases || [];
+  const units = useMemo(() => mockUnits || [], []);
+  const bases = useMemo(() => mockBases || [], []);
   const baseById = useMemo(() => Object.fromEntries(bases.map(b => [b.base_id, b])), [bases]);
 
   const [query, setQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All");
   const [selectedUnit, setSelectedUnit] = useState(null);
+
+  const unitCategories = useMemo(() => (
+    ["All", ...Array.from(new Set(units.map(unit => getUnitCategory(unit.name)))).sort()]
+  ), [units]);
 
   const filteredUnits = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return units;
-    return units.filter(u => (u.name || "").toLowerCase().includes(q));
-  }, [units, query]);
+    return units.filter(u => {
+      if (categoryFilter !== "All" && getUnitCategory(u.name) !== categoryFilter) return false;
+      if (!q) return true;
+      return [u.name, getUnitCategory(u.name), getUnitFunction(u.name)]
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [units, query, categoryFilter]);
 
   const activeUnit = useMemo(() => selectedUnit || filteredUnits[0] || null, [selectedUnit, filteredUnits]);
 
@@ -645,24 +756,6 @@ function UnitsPanel({ rows }) {
     return { total, ready, pending, notReady };
   }, [rows, activeUnit]);
 
-  const UNIT_ASSETS = {
-    '17 Squadron': 'Oryx, Rooivalk, Agusta',
-    'Command and Control School': 'C2, Training Simulators',
-    'Logistics Support Wing': 'Ground Support, Supply',
-    'Intelligence Wing': 'ISR, EW Support',
-    'Protection Services Unit': 'VIP, Access Control',
-    'Air Force Band': 'Ceremonial',
-    'Technical Maintenance Wing': 'Aircraft Maintenance',
-    'Engineering Directorate': 'Aviation/Software Engineering',
-    'Armoury Section': 'Armourers',
-    'Legal Services': 'Legal Advisory',
-    'Chaplaincy': 'Spiritual Support',
-    'Finance Division': 'Finance/Payroll',
-    'Corporate Communications': 'Media & Public Affairs',
-    'Human Resources': 'HR & Adjutant',
-    'Environmental Affairs': 'Environmental Management'
-  };
-
   const location = useMemo(() => {
     if (!activeUnit) return null;
     const base = baseById[activeUnit.base_id];
@@ -672,19 +765,32 @@ function UnitsPanel({ rows }) {
 
   return (
     <div id="units" className="glass-card">
-      <h4><FaUsers className="me-2" />Units</h4>
+      <h4><FaUsers className="me-2" />Current SAAF Units</h4>
+
+      <div className="unit-category-tabs mb-3">
+        {unitCategories.map(category => (
+          <button
+            key={category}
+            className={`unit-category-tab ${categoryFilter === category ? "active" : ""}`}
+            onClick={() => { setCategoryFilter(category); setSelectedUnit(null); }}
+            type="button"
+          >
+            {category}
+          </button>
+        ))}
+      </div>
 
       <InputGroup className="mb-3">
         <InputGroup.Text><FaSearch /></InputGroup.Text>
         <FormControl
-          placeholder="Search units by name..."
+          placeholder="Search by unit, role, aircraft, or function..."
           value={query}
           onChange={(e) => { setQuery(e.target.value); setSelectedUnit(null); }}
         />
       </InputGroup>
 
       <div className="d-flex flex-wrap gap-2 mb-3">
-        {filteredUnits.slice(0, 8).map(u => (
+        {filteredUnits.map(u => (
           <button
             key={u.unit_id || u.name}
             className={`btn btn-sm ${activeUnit?.name === u.name ? 'btn-primary' : 'btn-outline-light'}`}
@@ -712,7 +818,8 @@ function UnitsPanel({ rows }) {
               <span className="unit-info-metric text-danger">Not Ready: <strong>{stats.notReady}</strong></span>
             </>
           )}
-          <span className="unit-info-assets">Specialty/Air Assets: <strong>{UNIT_ASSETS[activeUnit.name] || '—'}</strong></span>
+          <span className="unit-info-assets">System Group: <strong>{getUnitCategory(activeUnit.name)}</strong></span>
+          <span className="unit-info-assets">Role / Aircraft / Function: <strong>{getUnitFunction(activeUnit.name)}</strong></span>
         </div>
       )}
     </div>
@@ -732,7 +839,7 @@ function ProfilePanel({ rows }) {
     );
   }, [rows, user]);
 
-  const initial = {
+  const initial = useMemo(() => ({
     forceNumber: user?.forceNumber || match?.force_number || "",
     rank: user?.rank || match?.rank || "",
     firstName: user?.firstName || match?.first_name || "",
@@ -745,10 +852,10 @@ function ProfilePanel({ rows }) {
     musteringName: user?.musteringName || match?.musteringName || "",
     postDescription: user?.post_description || match?.post_description || "",
     readinessStatus: user?.readinessStatus || match?.readinessStatus || "Ready",
-  };
+  }), [user, match]);
 
   const [form, setForm] = useState(initial);
-  useEffect(() => { setForm(initial); }, [match]);
+  useEffect(() => { setForm(initial); }, [initial]);
   const [isEditing, setIsEditing] = useState(false);
 
   // Rank options (as requested)
@@ -760,7 +867,7 @@ function ProfilePanel({ rows }) {
 
   // Post Description options (global list as requested)
   const postDescriptionOptions = [
-    "Pilot or Navigator", "OPS", "Comms", "Radar", "ATC", "Mission Control", "Career Management",
+    "Pilot or Navigator", "OPS", "Comms", "Radar", "ATC", "Mission Control", "Telecommunications Operator", "Career Management",
     "Catering", "Air hostenss", "Storeman", "Fire Fighter", "Logcell", "Tailor", "Procurement",
     "Int", "Electronic Warfare", "Counter Int", "Access Control", "VIP protector", "Task Force", "Instructor",
     "Military Police", "Band", "Aircraft Mechanic", "Flight Engineer", "Photographer", "Motor Mechanic",
@@ -935,7 +1042,390 @@ function ProfilePanel({ rows }) {
   );
 }
 
-function PersonnelOverview({ rows, onOpen, searchTerm, setSearchTerm, activeFilters, page, pageSize, setPage }) {
+function AvailabilityPanel({ rows, onOpen }) {
+  const skillOptions = useMemo(() => {
+    const values = new Set();
+    rows.forEach((person) => competencyTokens(person).forEach((token) => values.add(token)));
+    return Array.from(values).sort((a, b) => a.localeCompare(b));
+  }, [rows]);
+
+  const [filters, setFilters] = useState({
+    skill: "",
+    mustering: "All",
+    base: "All",
+    duration: 14,
+    neededFrom: new Date().toISOString().slice(0, 10),
+  });
+
+  const baseOptions = useMemo(() => Array.from(new Set(rows.map(r => r.baseName).filter(Boolean))).sort(), [rows]);
+
+  const filteredRows = useMemo(() => {
+    return rows.filter((person) => {
+      if (filters.mustering !== "All" && (person.musteringCode || person.mustering_code) !== filters.mustering) return false;
+      if (filters.base !== "All" && person.baseName !== filters.base) return false;
+      return matchesCompetency(person, filters.skill);
+    });
+  }, [rows, filters]);
+
+  const available = useMemo(() => {
+    const requestedStart = new Date(`${filters.neededFrom}T00:00:00`);
+    return filteredRows
+      .filter((person) => {
+        const availableFrom = new Date(`${person.availableFrom || filters.neededFrom}T00:00:00`);
+        return person.is_deployable === true
+          && String(person.readinessStatus).toLowerCase() === "ready"
+          && availableFrom <= requestedStart
+          && Number(person.maxDeploymentDays || 0) >= Number(filters.duration || 0);
+      })
+      .sort((a, b) => String(a.baseName).localeCompare(String(b.baseName)) || String(a.surname).localeCompare(String(b.surname)));
+  }, [filteredRows, filters]);
+
+  const unavailable = useMemo(() => {
+    return filteredRows
+      .filter((person) => !available.includes(person))
+      .sort((a, b) => daysUntil(a.availableFrom) - daysUntil(b.availableFrom))
+      .slice(0, 10);
+  }, [filteredRows, available]);
+
+  const standInsByMember = useMemo(() => {
+    const availablePool = rows.filter((candidate) => (
+      candidate.is_deployable === true
+      && String(candidate.readinessStatus).toLowerCase() === "ready"
+      && Number(candidate.maxDeploymentDays || 0) >= Number(filters.duration || 0)
+    ));
+
+    const scoreCandidate = (member, candidate) => {
+      if (member.force_number === candidate.force_number) return -1;
+      const memberSkills = competencyTokens(member).map((item) => item.toLowerCase());
+      const candidateSkills = competencyTokens(candidate).map((item) => item.toLowerCase());
+      const skillOverlap = candidateSkills.filter((skill) => memberSkills.some((required) => skill.includes(required) || required.includes(skill))).length;
+      let score = skillOverlap * 4;
+      if ((member.musteringCode || member.mustering_code) === (candidate.musteringCode || candidate.mustering_code)) score += 3;
+      if (member.baseName === candidate.baseName) score += 2;
+      if (matchesCompetency(candidate, filters.skill)) score += 2;
+      return score;
+    };
+
+    return Object.fromEntries(unavailable.map((member) => {
+      const standIns = availablePool
+        .map((candidate) => ({ ...candidate, matchScore: scoreCandidate(member, candidate) }))
+        .filter((candidate) => candidate.matchScore > 0)
+        .sort((a, b) => b.matchScore - a.matchScore || String(a.surname).localeCompare(String(b.surname)))
+        .slice(0, 3);
+      return [member.force_number, standIns];
+    }));
+  }, [rows, unavailable, filters]);
+
+  const updateFilter = (name, value) => setFilters(prev => ({ ...prev, [name]: value }));
+
+  return (
+    <div id="availability" className="glass-card availability-panel">
+      <div className="availability-header">
+        <div>
+          <h4 className="mb-1"><FaUserCheck className="me-2" />Deployment Availability</h4>
+          <div className="text-muted">Find combat-ready members by mustering, base, deployment window, and post competency.</div>
+        </div>
+        <div className="availability-metrics">
+          <div><strong>{available.length}</strong><span>Available</span></div>
+          <div><strong>{unavailable.length}</strong><span>Returning</span></div>
+        </div>
+      </div>
+
+      <div className="availability-filters">
+        <div>
+          <Form.Label>Post Competency</Form.Label>
+          <Form.Select value={filters.skill} onChange={(e) => updateFilter("skill", e.target.value)}>
+            <option value="">Any competency</option>
+            {skillOptions.map(skill => <option key={skill} value={skill}>{skill}</option>)}
+          </Form.Select>
+        </div>
+        <div>
+          <Form.Label>Mustering / Proficiency</Form.Label>
+          <Form.Select value={filters.mustering} onChange={(e) => updateFilter("mustering", e.target.value)}>
+            <option value="All">All musterings</option>
+            {mockMusterings.map(m => <option key={m.code} value={m.code}>{m.name}</option>)}
+          </Form.Select>
+        </div>
+        <div>
+          <Form.Label>Base / Station</Form.Label>
+          <Form.Select value={filters.base} onChange={(e) => updateFilter("base", e.target.value)}>
+            <option value="All">All bases</option>
+            {baseOptions.map(base => <option key={base} value={base}>{base}</option>)}
+          </Form.Select>
+        </div>
+        <div>
+          <Form.Label>Needed From</Form.Label>
+          <Form.Control type="date" value={filters.neededFrom} onChange={(e) => updateFilter("neededFrom", e.target.value)} />
+        </div>
+        <div>
+          <Form.Label>Days</Form.Label>
+          <Form.Control type="number" min="1" max="180" value={filters.duration} onChange={(e) => updateFilter("duration", e.target.value)} />
+        </div>
+      </div>
+
+      <div className="availability-sections">
+        <section>
+          <div className="availability-section-title">
+            <FaCalendarAlt /> Combat-ready for deployment
+          </div>
+          <div className="table-responsive">
+            <Table hover variant="dark" className="availability-table">
+              <thead>
+                <tr>
+                  <th>Member</th><th>Competencies</th><th>Base</th><th>Available</th><th>Duration</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {available.slice(0, 12).map((person) => (
+                  <tr key={person.force_number}>
+                    <td><strong>{person.rank} {person.surname}</strong><div className="text-muted">{person.force_number}</div></td>
+                    <td>{competencyTokens(person).slice(0, 3).join(", ")}</td>
+                    <td>{person.baseName}</td>
+                    <td><Badge bg="success">Now</Badge></td>
+                    <td>{person.maxDeploymentDays} days</td>
+                    <td><Button variant="outline-light" size="sm" onClick={() => onOpen(person)}>View</Button></td>
+                  </tr>
+                ))}
+                {available.length === 0 && (
+                  <tr><td colSpan={6} className="text-center text-muted">No members match the requested deployment window.</td></tr>
+                )}
+              </tbody>
+            </Table>
+          </div>
+        </section>
+
+        <section>
+          <div className="availability-section-title">
+            <FaExchangeAlt /> Unavailable members and stand-ins
+          </div>
+          <div className="standin-list">
+            {unavailable.map((member) => {
+              const standIns = standInsByMember[member.force_number] || [];
+              return (
+                <div className="standin-row" key={member.force_number}>
+                  <div className="standin-source">
+                    <div className="standin-name">{member.rank} {member.surname}</div>
+                    <div className="standin-meta">{member.post_description || member.musteringName} | {member.unavailableReason || member.readinessStatus}</div>
+                    <Badge bg="warning" text="dark">Available {formatDate(member.availableFrom)} ({daysUntil(member.availableFrom)} days)</Badge>
+                  </div>
+                  <div className="standin-candidates">
+                    {standIns.length ? standIns.map((candidate) => (
+                      <button key={candidate.force_number} className="standin-chip" onClick={() => onOpen(candidate)}>
+                        <strong>{candidate.rank} {candidate.surname}</strong>
+                        <span>{candidate.post_description || candidate.musteringName}</span>
+                        <small>{candidate.baseName} | score {candidate.matchScore}</small>
+                      </button>
+                    )) : (
+                      <span className="text-muted">No suitable stand-in currently available.</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {unavailable.length === 0 && (
+              <div className="text-center text-muted p-3">No unavailable members for this filter.</div>
+            )}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function AssetsPlannerPanel({ rows, onOpen }) {
+  const [categoryKey, setCategoryKey] = useState("aircraft");
+  const category = ASSET_CATALOG[categoryKey];
+  const [assetName, setAssetName] = useState(category.items[0]?.name || "");
+  const [deploymentType, setDeploymentType] = useState("internal");
+  const [assignments, setAssignments] = useState({});
+
+  useEffect(() => {
+    const next = ASSET_CATALOG[categoryKey].items[0]?.name || "";
+    setAssetName(next);
+    setAssignments({});
+  }, [categoryKey]);
+
+  const selectedAsset = useMemo(() => (
+    category.items.find(item => item.name === assetName) || category.items[0]
+  ), [category, assetName]);
+
+  const eligibleMembers = useMemo(() => (
+    rows
+      .filter(member => {
+        const ready = String(member.readinessStatus).toLowerCase() === "ready";
+        const deployable = member.is_deployable === true;
+        const available = String(member.availabilityStatus || "Available").toLowerCase() === "available";
+        if (!(ready && deployable && available)) return false;
+        if (deploymentType === "external" && member.is_area_bound) return false;
+        return true;
+      })
+      .sort((a, b) => String(a.surname).localeCompare(String(b.surname)))
+  ), [rows, deploymentType]);
+
+  const suggestionsByPost = useMemo(() => {
+    const map = {};
+    (selectedAsset?.posts || []).forEach(post => {
+      map[post] = eligibleMembers
+        .map(member => {
+          const matchedPost = memberMatchesPost(member, post);
+          let score = matchedPost ? 8 : 0;
+          if (String(member.post_description || "").toLowerCase() === post.toLowerCase()) score += 4;
+          if (deploymentType === "external") {
+            const clearance = String(member.security_clearance || member.security_dearance || "").toLowerCase();
+            if (clearance.includes("secret")) score += 2;
+          }
+          if (String(member.baseName || "").toLowerCase().includes("waterkloof")) score += 1;
+          return { ...member, matchScore: score };
+        })
+        .filter(member => member.matchScore > 0)
+        .sort((a, b) => b.matchScore - a.matchScore || String(a.surname).localeCompare(String(b.surname)))
+        .slice(0, 5);
+    });
+    return map;
+  }, [eligibleMembers, selectedAsset, deploymentType]);
+
+  const assignedMembers = useMemo(() => (
+    Object.entries(assignments)
+      .map(([post, forceNumber]) => {
+        const member = rows.find(item => item.force_number === forceNumber);
+        return member ? { post, member } : null;
+      })
+      .filter(Boolean)
+  ), [assignments, rows]);
+
+  const assignMember = (post, forceNumber) => {
+    setAssignments(prev => ({ ...prev, [post]: forceNumber }));
+  };
+
+  const clearMember = (post) => {
+    setAssignments(prev => {
+      const next = { ...prev };
+      delete next[post];
+      return next;
+    });
+  };
+
+  return (
+    <div id="assets" className="asset-planner">
+      <section className="glass-card asset-hero">
+        <div>
+          <div className="hero-kicker">SAAF Assets</div>
+          <div className="hero-title">Aircraft, Vehicles and C2 Asset Planner</div>
+          <div className="hero-sub">Select current aircraft, deployable support vehicles, UAV/reconnaissance platforms, or C2 assets and fill required posts with combat-ready members.</div>
+        </div>
+        <div className="deployment-toggle">
+          <Button variant={deploymentType === "internal" ? "primary" : "outline-light"} onClick={() => setDeploymentType("internal")}>Internal</Button>
+          <Button variant={deploymentType === "external" ? "primary" : "outline-light"} onClick={() => setDeploymentType("external")}>External</Button>
+        </div>
+      </section>
+
+      <section className="asset-tabs">
+        {Object.entries(ASSET_CATALOG).map(([key, item]) => {
+          const Icon = item.icon;
+          return (
+            <button key={key} className={`asset-tab ${categoryKey === key ? "active" : ""}`} onClick={() => setCategoryKey(key)}>
+              <Icon />
+              <span>{item.label}</span>
+              <small>{item.type}</small>
+            </button>
+          );
+        })}
+      </section>
+
+      <section className="asset-layout">
+        <div className="glass-card asset-list-panel">
+          <div className="summary-card-header">
+            <h4>{category.label}</h4>
+            <span className="summary-chip">{category.items.length} listed</span>
+          </div>
+          <div className="asset-list">
+            {category.items.map(item => (
+              <button key={item.name} className={`asset-item ${selectedAsset?.name === item.name ? "active" : ""}`} onClick={() => { setAssetName(item.name); setAssignments({}); }}>
+                <strong>{item.name}</strong>
+                <span>{item.role}</span>
+                <small>{item.squadron}</small>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="glass-card post-fill-panel">
+          <div className="summary-card-header">
+            <h4>{selectedAsset?.name}</h4>
+            <span className="summary-chip">{selectedAsset?.posts.length || 0} posts</span>
+          </div>
+          <div className="asset-context">
+            <span>Role: <strong>{selectedAsset?.role}</strong></span>
+            <span>Unit: <strong>{selectedAsset?.squadron}</strong></span>
+            <span>Deployment: <strong>{deploymentType}</strong></span>
+          </div>
+
+          <div className="post-grid">
+            {(selectedAsset?.posts || []).map(post => {
+              const suggestions = suggestionsByPost[post] || [];
+              const assignedForce = assignments[post] || "";
+              const assigned = rows.find(member => member.force_number === assignedForce);
+              return (
+                <div className="post-card" key={post}>
+                  <div className="post-card-header">
+                    <div>
+                      <strong>{post}</strong>
+                      <span>{assigned ? `${assigned.rank} ${assigned.surname}` : "Open post"}</span>
+                    </div>
+                    {assigned && <Button variant="outline-light" size="sm" onClick={() => clearMember(post)}>Clear</Button>}
+                  </div>
+
+                  <Form.Select value={assignedForce} onChange={(event) => assignMember(post, event.target.value)}>
+                    <option value="">Nominate member...</option>
+                    {eligibleMembers.map(member => (
+                      <option key={member.force_number} value={member.force_number}>
+                        {member.rank} {member.surname}, {member.first_name} - {member.post_description || member.musteringName}
+                      </option>
+                    ))}
+                  </Form.Select>
+
+                  <div className="suggestion-list">
+                    {suggestions.map(member => (
+                      <button key={member.force_number} className="suggestion-row" onClick={() => assignMember(post, member.force_number)}>
+                        <span>
+                          <strong>{member.rank} {member.surname}</strong>
+                          <small>{member.post_description || member.musteringName} | {member.baseName}</small>
+                        </span>
+                        <Badge bg="success">score {member.matchScore}</Badge>
+                      </button>
+                    ))}
+                    {!suggestions.length && <div className="text-muted">No combat-ready match for this post.</div>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="glass-card manifest-panel">
+          <div className="summary-card-header">
+            <h4>Deployment Nominal Roll</h4>
+            <span className="summary-chip">{assignedMembers.length}/{selectedAsset?.posts.length || 0} filled</span>
+          </div>
+          <div className="manifest-list">
+            {assignedMembers.map(({ post, member }) => (
+              <button key={`${post}-${member.force_number}`} className="manifest-row" onClick={() => onOpen(member)}>
+                <span>
+                  <strong>{post}</strong>
+                  <small>{member.rank} {member.surname}, {member.first_name}</small>
+                </span>
+                <Badge bg="info">{member.force_number}</Badge>
+              </button>
+            ))}
+            {!assignedMembers.length && <div className="text-muted">No posts filled yet.</div>}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function PersonnelOverview({ rows, onOpen, searchTerm, setSearchTerm, page, pageSize, setPage }) {
   const filtered = useMemo(() => {
     let data = rows;
 
@@ -949,19 +1439,8 @@ function PersonnelOverview({ rows, onOpen, searchTerm, setSearchTerm, activeFilt
       );
     }
 
-    // apply quick actions filters
-    if (activeFilters.mustering.length) {
-      data = data.filter(p => activeFilters.mustering.includes(p.musteringCode || p.musteringName?.slice(0,2)));
-    }
-    if (activeFilters.rank.length) {
-      data = data.filter(p => activeFilters.rank.includes(p.rank));
-    }
-    if (activeFilters.readiness.length) {
-      data = data.filter(p => activeFilters.readiness.includes(p.readinessStatus));
-    }
-
     return data;
-  }, [rows, searchTerm, activeFilters]);
+  }, [rows, searchTerm]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const pageSafe = Math.min(page, totalPages);
@@ -975,16 +1454,16 @@ function PersonnelOverview({ rows, onOpen, searchTerm, setSearchTerm, activeFilt
   return (
     <div id="personnel" className="glass-card">
       <div className="d-flex justify-content-between align-items-center">
-        <h4 className="mb-0"><FaUsers className="me-2" />Personnel</h4>
-        <Button variant="outline-light" size="sm" onClick={() => {}}>
-          Overview
+        <h4 className="mb-0"><FaUsers className="me-2" />Personnel Muster Roll</h4>
+        <Button variant="outline-light" size="sm" onClick={() => exportPersonnelToCSV(filtered, "personnel_filtered.csv")} disabled={!filtered.length}>
+          <FaFileExport className="me-1" /> Export
         </Button>
       </div>
 
       <InputGroup className="mb-3">
         <InputGroup.Text><FaSearch /></InputGroup.Text>
         <FormControl
-          placeholder="Search personnel..."
+          placeholder="Search force number, rank, mustering, unit, or base..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -994,7 +1473,7 @@ function PersonnelOverview({ rows, onOpen, searchTerm, setSearchTerm, activeFilt
         <Table striped hover variant="dark" className="mb-0">
           <thead>
             <tr>
-              <th>Force #</th><th>Rank</th><th>Name</th><th>Mustering</th><th>Unit</th><th>Base</th><th>Readiness</th><th>Actions</th>
+              <th>Force #</th><th>Rank</th><th>Name</th><th>Mustering</th><th>Unit</th><th>Base / Station</th><th>Combat Readiness</th><th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -1037,53 +1516,6 @@ function PersonnelOverview({ rows, onOpen, searchTerm, setSearchTerm, activeFilt
   );
 }
 
-function RecentActivities() {
-  return (
-    <div className="glass-card">
-      <h4><FaClipboardList className="me-2" />Recent Activities</h4>
-      <p className="text-muted">No recent activities</p>
-    </div>
-  );
-}
-
-function NotificationsPanel() {
-  const [items, setItems] = useState([
-    { id: 1, text: "System backup completed", read: false },
-    { id: 2, text: "New personnel record imported", read: true },
-  ]);
-  return (
-    <div className="glass-card">
-      <h4><FaBell className="me-2" />Notifications</h4>
-      <ul className="mb-0">
-        {items.map(n => (
-          <li key={n.id} className="d-flex justify-content-between">
-            <span className={n.read ? "text-muted" : ""}>{n.text}</span>
-            {!n.read && (
-              <Button size="sm" variant="outline-light" onClick={() => setItems(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x))}>
-                Mark read
-              </Button>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function SystemStatusPanel() {
-  return (
-    <div className="glass-card">
-      <h4><FaServer className="me-2" />System Status</h4>
-      <div className="system-status">
-        <div className="status-item online">
-          <span className="status-dot"></span>
-          <span>All Systems Operational</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function DonutChart({ size = 160, thickness = 14, segments = [], label, sublabel }) {
   const radius = (size / 2) - (thickness / 2);
   const circumference = 2 * Math.PI * radius;
@@ -1091,8 +1523,17 @@ function DonutChart({ size = 160, thickness = 14, segments = [], label, sublabel
   let acc = 0;
   return (
     <div className="donut-chart">
-      <svg width={size} height={size} className="chart-svg">
+      <svg width={size} height={size} className="chart-svg donut-svg">
         <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
+          <circle
+            className="donut-track"
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="transparent"
+            stroke="rgba(255,255,255,0.08)"
+            strokeWidth={thickness}
+          />
           {segments.map((seg, i) => {
             const p = seg.value / total;
             const dash = p * circumference;
@@ -1102,6 +1543,7 @@ function DonutChart({ size = 160, thickness = 14, segments = [], label, sublabel
             return (
               <circle
                 key={i}
+                className="donut-segment-base"
                 cx={size / 2}
                 cy={size / 2}
                 r={radius}
@@ -1114,21 +1556,12 @@ function DonutChart({ size = 160, thickness = 14, segments = [], label, sublabel
               />
             );
           })}
-          {/* track */}
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="transparent"
-            stroke="rgba(255,255,255,0.08)"
-            strokeWidth={thickness}
-          />
         </g>
-        <text x="50%" y="48%" dominantBaseline="middle" textAnchor="middle" fill="#fff" fontSize="22" fontWeight="800">
+        <text className="donut-label" x="50%" y="48%" dominantBaseline="middle" textAnchor="middle" fill="#fff" fontSize="22" fontWeight="800">
           {label}
         </text>
         {sublabel && (
-          <text x="50%" y="62%" dominantBaseline="middle" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="12">
+          <text className="donut-sublabel" x="50%" y="62%" dominantBaseline="middle" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="12">
             {sublabel}
           </text>
         )}
@@ -1137,147 +1570,202 @@ function DonutChart({ size = 160, thickness = 14, segments = [], label, sublabel
   );
 }
 
-function Sparkline({ data = [], width = 280, height = 80, color = '#4cafef' }) {
-  if (!data.length) data = [0];
-  const max = Math.max(...data);
-  const min = Math.min(...data);
-  const dx = width / Math.max(1, data.length - 1);
-  const norm = (v) => {
-    if (max === min) return height / 2;
-    return height - ((v - min) / (max - min)) * height;
-  };
-  const d = data.map((v, i) => `${i === 0 ? 'M' : 'L'} ${i * dx} ${norm(v)}`).join(' ');
-  const area = `${d} L ${width} ${height} L 0 ${height} Z`;
-  return (
-    <svg width={width} height={height} className="chart-svg">
-      <path d={area} fill={color + '33'} />
-      <path d={d} stroke={color} strokeWidth="2" fill="none" />
-    </svg>
-  );
-}
 
-function OverviewPanel({ rows }) {
+function OverviewPanel({ rows, onNavigate, onOpen }) {
   const total = rows.length;
   const ready = rows.filter(r => String(r.readinessStatus).toLowerCase() === 'ready').length;
   const pending = rows.filter(r => String(r.readinessStatus).toLowerCase() === 'pending').length;
   const notReady = rows.filter(r => String(r.readinessStatus).toLowerCase() === 'not ready').length;
-  const readyPct = total ? Math.round((ready / total) * 100) : 0;
   const deployable = rows.filter(r => r.is_deployable === true).length;
-  const activeMusterings = new Set(rows.map(r => r.musteringCode).filter(Boolean)).size;
+  const availableNow = rows.filter(r => (
+    r.is_deployable === true
+    && String(r.readinessStatus).toLowerCase() === 'ready'
+    && String(r.availabilityStatus || 'Available').toLowerCase() === 'available'
+  )).length;
+  const readyPct = total ? Math.round((ready / total) * 100) : 0;
+  const availablePct = total ? Math.round((availableNow / total) * 100) : 0;
 
-  // counts by base and by unit
-  const countsBy = (key) => rows.reduce((acc, r) => { const k = r[key]; if (!k) return acc; acc[k] = (acc[k] || 0) + 1; return acc; }, {});
-  const readyBy = (key) => rows.reduce((acc, r) => { const k = r[key]; if (!k) return acc; if (!acc[k]) acc[k] = { total: 0, ready: 0 }; acc[k].total++; if (String(r.readinessStatus).toLowerCase() === 'ready') acc[k].ready++; return acc; }, {});
-  const baseCounts = countsBy('baseName');
-  const unitStats = readyBy('unitName');
-  const topUnits = Object.entries(unitStats)
-    .map(([name, v]) => ({ name, total: v.total, readyPct: v.total ? Math.round((v.ready / v.total) * 100) : 0 }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 6);
+  const readinessRows = [
+    { label: "Ready", value: ready, tone: "ready" },
+    { label: "Pending", value: pending, tone: "pending" },
+    { label: "Not Ready", value: notReady, tone: "not-ready" },
+  ];
 
-  const sparkData = Object.values(baseCounts);
+  const baseRows = useMemo(() => {
+    const by = {};
+    rows.forEach((member) => {
+      const name = member.baseName || "Unknown";
+      if (!by[name]) by[name] = { name, total: 0, available: 0, deployable: 0 };
+      by[name].total++;
+      if (member.is_deployable) by[name].deployable++;
+      if (member.is_deployable && String(member.readinessStatus).toLowerCase() === "ready") by[name].available++;
+    });
+    return Object.values(by).sort((a, b) => b.available - a.available || b.total - a.total).slice(0, 6);
+  }, [rows]);
+
+  const competencyRows = useMemo(() => {
+    const by = {};
+    rows.forEach((member) => {
+      competencyTokens(member).forEach((skill) => {
+        if (!by[skill]) by[skill] = { skill, total: 0, available: 0 };
+        by[skill].total++;
+        if (member.is_deployable && String(member.readinessStatus).toLowerCase() === "ready") by[skill].available++;
+      });
+    });
+    return Object.values(by).sort((a, b) => b.available - a.available || b.total - a.total).slice(0, 8);
+  }, [rows]);
+
+  const returnQueue = useMemo(() => (
+    rows
+      .filter(member => !(member.is_deployable && String(member.readinessStatus).toLowerCase() === "ready"))
+      .sort((a, b) => daysUntil(a.availableFrom) - daysUntil(b.availableFrom))
+      .slice(0, 5)
+  ), [rows]);
+
+  const noStandIn = useMemo(() => {
+    const availablePool = rows.filter(member => member.is_deployable && String(member.readinessStatus).toLowerCase() === "ready");
+    return returnQueue.filter(member => {
+      const needed = competencyTokens(member).map(skill => skill.toLowerCase());
+      return !availablePool.some(candidate => (
+        candidate.force_number !== member.force_number
+        && competencyTokens(candidate).some(skill => needed.some(required => skill.toLowerCase().includes(required) || required.includes(skill.toLowerCase())))
+      ));
+    });
+  }, [rows, returnQueue]);
 
   return (
-    <div className="overview-grid">
-      {/* Colorful metric tiles (alternate summaries) */}
-      <div className="glass-card metric-card metric-amber">
-        <div className="d-flex justify-content-between align-items-center">
-          <div>
-            <div className="metric-label">Pending Readiness</div>
-            <div className="metric-value">{pending}</div>
-            <div className="metric-sub">Awaiting clearance</div>
-          </div>
-          <FaHourglassHalf className="metric-icon" />
+    <div className="command-grid">
+      <section className="glass-card command-hero">
+        <div>
+          <div className="hero-kicker">Force Preparation</div>
+          <div className="hero-title">SAAF Deployment Readiness</div>
+          <div className="hero-sub">A force-preparation view of available personnel, base capacity, mustering coverage, and stand-in risk.</div>
         </div>
-      </div>
-      <div className="glass-card metric-card metric-red">
-        <div className="d-flex justify-content-between align-items-center">
-          <div>
-            <div className="metric-label">Not Ready</div>
-            <div className="metric-value">{notReady}</div>
-            <div className="metric-sub">Requires action</div>
-          </div>
-          <FaExclamationTriangle className="metric-icon" />
+        <div className="command-actions">
+          <Button variant="primary" onClick={() => onNavigate("availability")}><FaUserCheck className="me-1" /> Find Deployable Members</Button>
+          <Button variant="outline-light" onClick={() => exportPersonnelToCSV(rows, "staffsync_personnel.csv")} disabled={!rows.length}><FaFileExport className="me-1" /> Export</Button>
         </div>
-      </div>
-      <div className="glass-card metric-card metric-green">
-        <div className="d-flex justify-content-between align-items-center">
-          <div>
-            <div className="metric-label">Deployable</div>
-            <div className="metric-value">{deployable}</div>
-            <div className="metric-sub">Available for deployment</div>
-          </div>
-          <FaPlane className="metric-icon" />
-        </div>
-      </div>
-      <div className="glass-card metric-card metric-purple">
-        <div className="d-flex justify-content-between align-items-center">
-          <div>
-            <div className="metric-label">Active Musterings</div>
-            <div className="metric-value">{activeMusterings}</div>
-            <div className="metric-sub">Specializations</div>
-          </div>
-          <FaLayerGroup className="metric-icon" />
-        </div>
-      </div>
+      </section>
 
-      {/* Donut + legend */}
-      <div className="glass-card donut-card">
-        <h4 className="mb-3"><FaBolt className="me-2" />Readiness Overview</h4>
-        <div className="chart-row">
+      <section className="command-metrics">
+        {[
+          { label: "Muster Roll", value: total, icon: <FaUsers /> },
+          { label: "Combat Ready", value: `${readyPct}%`, icon: <FaBolt /> },
+          { label: "Deployable", value: deployable, icon: <FaPlane /> },
+          { label: "Available Now", value: availableNow, icon: <FaUserCheck /> },
+        ].map((metric) => (
+          <div className="metric-tile" key={metric.label}>
+            <span>{metric.icon}</span>
+            <strong>{metric.value}</strong>
+            <small>{metric.label}</small>
+          </div>
+        ))}
+      </section>
+
+      <section className="glass-card command-card readiness-card">
+        <div className="summary-card-header">
+          <h4>Combat Readiness Split</h4>
+          <span className="summary-chip">{availablePct}% available now</span>
+        </div>
+        <div className="readiness-layout">
           <DonutChart
-            size={180}
-            thickness={16}
+            size={160}
+            thickness={13}
             label={`${readyPct}%`}
             sublabel="Ready"
             segments={[
-              { value: ready, color: '#2ecc71' },
-              { value: pending, color: '#f1c40f' },
-              { value: notReady, color: '#e74c3c' },
+              { value: ready, color: 'var(--ready-color)' },
+              { value: pending, color: 'var(--pending-color)' },
+              { value: notReady, color: 'var(--notready-color)' },
             ]}
           />
-          <div className="legend">
-            <div className="legend-item"><span className="legend-dot" style={{ background: '#2ecc71' }}></span> Ready: {ready}</div>
-            <div className="legend-item"><span className="legend-dot" style={{ background: '#f1c40f' }}></span> Pending: {pending}</div>
-            <div className="legend-item"><span className="legend-dot" style={{ background: '#e74c3c' }}></span> Not Ready: {notReady}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Sparkline card */}
-      <div className="glass-card sparkline-card">
-        <h4 className="mb-3"><GiCompass className="me-2" />Strength by Base</h4>
-        <Sparkline data={sparkData} width={320} height={96} color="#1e90ff" />
-      </div>
-
-      {/* Top units as cards with readiness bar */}
-      <div className="glass-card unit-list-card">
-        <h4 className="mb-3"><FaUsers className="me-2" />Top Units</h4>
-        {topUnits.length === 0 ? (
-          <div className="text-center text-muted">No data</div>
-        ) : (
-          <div className="unit-card-list">
-            {topUnits.map((u) => {
-              const barColor = u.readyPct >= 75 ? '#2ecc71' : u.readyPct >= 50 ? '#f1c40f' : '#e74c3c';
+          <div className="readiness-bars">
+            {readinessRows.map(item => {
+              const pct = total ? Math.round((item.value / total) * 100) : 0;
               return (
-                <div className="unit-card" key={u.name}>
-                  <div className="d-flex justify-content-between align-items-center unit-header">
-                    <div className="unit-name text-truncate" title={u.name}>{u.name}</div>
-                    <div className="unit-strength">{u.total}</div>
-                  </div>
-                  <div className="unit-bar">
-                    <div className="unit-bar-fill" style={{ width: `${u.readyPct}%`, background: barColor }} />
-                  </div>
-                  <div className="d-flex justify-content-between unit-meta">
-                    <span className="text-muted">Readiness</span>
-                    <Badge bg={u.readyPct >= 75 ? 'success' : u.readyPct >= 50 ? 'warning' : 'danger'}>{u.readyPct}%</Badge>
-                  </div>
+                <div className="bar-row" key={item.label}>
+                  <div><strong>{item.label}</strong><span>{item.value}</span></div>
+                  <div className={`capacity-bar ${item.tone}`}><span style={{ width: `${pct}%` }} /></div>
                 </div>
               );
             })}
           </div>
-        )}
-      </div>
+        </div>
+      </section>
+
+      <section className="glass-card command-card">
+        <div className="summary-card-header">
+          <h4>Base / Station Capacity</h4>
+          <span className="summary-chip">Available / Total</span>
+        </div>
+        <div className="base-capacity-list">
+          {baseRows.map(base => {
+            const pct = base.total ? Math.round((base.available / base.total) * 100) : 0;
+            return (
+              <div className="base-capacity-row" key={base.name}>
+                <div>
+                  <strong>{base.name}</strong>
+                  <span>{base.available} available of {base.total}</span>
+                </div>
+                <div className="capacity-bar"><span style={{ width: `${pct}%` }} /></div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="glass-card command-card">
+        <div className="summary-card-header">
+          <h4>Mustering Coverage</h4>
+          <span className="summary-chip">{competencyRows.length} top skills</span>
+        </div>
+        <div className="coverage-grid">
+          {competencyRows.map(item => {
+            const pct = item.total ? Math.round((item.available / item.total) * 100) : 0;
+            return (
+              <div className="coverage-row" key={item.skill}>
+                <div>
+                  <strong>{item.skill}</strong>
+                  <span>{item.available}/{item.total}</span>
+                </div>
+                <div className="capacity-bar"><span style={{ width: `${pct}%` }} /></div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="glass-card command-card">
+        <div className="summary-card-header">
+          <h4>Return-to-Availability Queue</h4>
+          <span className="summary-chip">Earliest available</span>
+        </div>
+        <div className="return-list">
+          {returnQueue.map(member => (
+            <button className="return-row" key={member.force_number} onClick={() => onOpen(member)}>
+              <span><strong>{member.rank} {member.surname}</strong><small>{member.post_description || member.musteringName}</small></span>
+              <Badge bg="warning" text="dark">{formatDate(member.availableFrom)}</Badge>
+            </button>
+          ))}
+          {!returnQueue.length && <div className="text-muted">No pending return items.</div>}
+        </div>
+      </section>
+
+      <section className="glass-card command-card">
+        <div className="summary-card-header">
+          <h4>Stand-in Risk Watch</h4>
+          <span className="summary-chip">{noStandIn.length} uncovered</span>
+        </div>
+        <div className="risk-list">
+          {noStandIn.map(member => (
+            <button className="risk-row" key={member.force_number} onClick={() => onOpen(member)}>
+              <strong>{member.rank} {member.surname}</strong>
+              <span>{competencyTokens(member).slice(0, 2).join(", ") || member.musteringName}</span>
+            </button>
+          ))}
+          {!noStandIn.length && <div className="text-muted">Current stand-in coverage is adequate.</div>}
+        </div>
+      </section>
     </div>
   );
 }
@@ -1285,7 +1773,6 @@ function OverviewPanel({ rows }) {
 export default function DashboardPage() {
   const { user, logout, isLoading, updateProfile } = useAuth();
   const [profilePic, setProfilePic] = useState(null);
-  const [activeFilters, setActiveFilters] = useState({ mustering: [], rank: [], readiness: [] });
   // Default landing tab should be Overview
   const [activeSection, setActiveSection] = useState("overview");
 
@@ -1305,21 +1792,6 @@ export default function DashboardPage() {
     return () => { alive = false; };
   }, []);
 
-  const statsData = useMemo(() => {
-    const total = rows.length;
-    const ready = rows.filter(r => String(r.readinessStatus).toLowerCase() === 'ready').length;
-    const readyPct = total ? Math.round((ready / total) * 100) : 0;
-    const basesCount = (mockBases && mockBases.length) ? mockBases.length : new Set(rows.map(r => r.baseName)).size;
-    const unitsCount = (mockUnits && mockUnits.length) ? mockUnits.length : new Set(rows.map(r => r.unitName)).size;
-
-    return [
-      { title: "Active Personnel", value: String(total), icon: <FaUsers />, variant: "success" },
-      { title: "Combat Ready", value: `${readyPct}%`, icon: <GiSwordWound />, variant: readyPct >= 75 ? "success" : readyPct >= 50 ? "warning" : "danger" },
-      { title: "Active Bases", value: String(basesCount), icon: <FaMapMarkedAlt />, variant: "info" },
-      { title: "Active Units", value: String(unitsCount), icon: <FaTasks />, variant: "primary" },
-    ];
-  }, [rows]);
-
   const handlePicUpload = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -1338,28 +1810,14 @@ export default function DashboardPage() {
         <div className="d-flex justify-content-between align-items-center">
           <div className="d-flex align-items-center">
             <img src={saafGold} alt="SAAF Logo" className="header-logo" style={{ height: 51, width: "auto", maxWidth: "100%" }}/>
-            <h2 className="ms-2 mb-0">STAFFSYNC DASHBOARD</h2>
+            <div className="ms-2">
+              <h2 className="mb-0">STAFFSYNC</h2>
+              <div className="header-subtitle">Deployment availability and competency planning</div>
+            </div>
           </div>
           <div className="d-flex align-items-center gap-3">
             <Button variant="danger" onClick={logout}><FaSignOutAlt className="me-1" /> Sign Out</Button>
           </div>
-        </div>
-
-        <div className="stats-container">
-          {statsData.map((s, i) => (
-            <div key={i} className="stat-card">
-              <div className="d-flex align-items-center">
-                <span className="stat-icon me-2">{s.icon}</span>
-                <div>
-                  <h6 className="card-title mb-0">{s.title}</h6>
-                  <div className="d-flex align-items-baseline">
-                    <h2 className="mb-0 me-2">{s.value}</h2>
-                    {s.change ? (<Badge bg={s.variant}>{s.change}</Badge>) : null}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       </header>
 
@@ -1390,9 +1848,15 @@ export default function DashboardPage() {
       <main className="dashboard-main">
         <div className="glass-panel">
           {activeSection === "overview" && (
-            <>
-              <OverviewPanel rows={rows} />
-            </>
+            <OverviewPanel rows={rows} onNavigate={setActiveSection} onOpen={setViewItem} />
+          )}
+
+          {activeSection === "availability" && (
+            <AvailabilityPanel rows={rows} onOpen={setViewItem} />
+          )}
+
+          {activeSection === "assets" && (
+            <AssetsPlannerPanel rows={rows} onOpen={setViewItem} />
           )}
 
           {activeSection === "personnel" && (
@@ -1402,7 +1866,6 @@ export default function DashboardPage() {
                 onOpen={setViewItem}
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
-                activeFilters={activeFilters}
                 page={page}
                 pageSize={pageSize}
                 setPage={setPage}
@@ -1428,20 +1891,6 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      {/* right column */}
-      <aside className="dashboard-right">
-        <div className="glass-panel">
-          <QuickActionsPanel
-            rows={rows}
-            onFilterChange={(f) => { setActiveFilters(f); setPage(1); }}
-            onExport={(list) => exportPersonnelToCSV(list)}
-            canExport={rows.length > 0}
-          />
-          <NotificationsPanel />
-          <SystemStatusPanel />
-        </div>
-      </aside>
-
       {/* View modal */}
       <Modal show={!!viewItem} onHide={() => setViewItem(null)} centered>
         <Modal.Header closeButton><Modal.Title>Personnel Profile</Modal.Title></Modal.Header>
@@ -1461,6 +1910,10 @@ export default function DashboardPage() {
                   <tr><th>Unit</th><td>{viewItem.unitName}</td></tr>
                   <tr><th>Base</th><td>{viewItem.baseName}</td></tr>
                   <tr><th>Readiness</th><td>{viewItem.readinessStatus}</td></tr>
+                  <tr><th>Availability</th><td>{viewItem.availabilityStatus || "Available"}</td></tr>
+                  <tr><th>Available From</th><td>{formatDate(viewItem.availableFrom)}</td></tr>
+                  <tr><th>Competencies</th><td>{competencyTokens(viewItem).join(", ") || "N/A"}</td></tr>
+                  <tr><th>Deployment Window</th><td>{viewItem.maxDeploymentDays ? `${viewItem.maxDeploymentDays} days` : "N/A"}</td></tr>
                 </tbody>
               </Table>
             </>

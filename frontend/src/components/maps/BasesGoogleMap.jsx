@@ -27,16 +27,19 @@ const SA_BOUNDS = { north: -22, south: -35, east: 33, west: 16 };
 
 // Lightweight dark style if no MapID was provided
 const DARK_STYLE = [
-  { elementType: "geometry", stylers: [{ color: "#1a1f2a" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#e8eaed" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#1a1f2a" }] },
-  { featureType: "administrative", elementType: "geometry", stylers: [{ color: "#3a475a" }] },
-  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#cfcfcf" }] },
-  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#193d3d" }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#263238" }] },
-  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9e9e9e" }] },
-  { featureType: "transit", elementType: "geometry", stylers: [{ color: "#2b3943" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#0b1a24" }] }
+  { elementType: "geometry", stylers: [{ color: "#101820" }] },
+  { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#d8e3ec" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#071016" }, { weight: 2 }] },
+  { featureType: "administrative", elementType: "geometry", stylers: [{ color: "#34495e" }] },
+  { featureType: "administrative.country", elementType: "geometry.stroke", stylers: [{ color: "#6fa8bc" }, { weight: 1.1 }] },
+  { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#111d25" }] },
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#1e2b34" }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#0b1218" }] },
+  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#83929d" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#071016" }] },
 ];
 
 // Approx base coordinates by name
@@ -47,6 +50,9 @@ const BASE_COORDS = {
   'AFB Ysterplaat': { lat: -33.90, lng: 18.50 },
   'AFB Hoedspruit': { lat: -24.36, lng: 31.05 },
   'AFB Langebaanweg': { lat: -32.97, lng: 18.16 },
+  'AFB Durban': { lat: -29.97, lng: 30.95 },
+  'AFS Port Elizabeth': { lat: -33.98, lng: 25.61 },
+  'AFB Overberg': { lat: -34.55, lng: 20.25 },
 };
 
 // Optional short summaries per base (mock knowledge)
@@ -57,11 +63,18 @@ const BASE_SUMMARY = {
   'AFB Ysterplaat': 'Maritime/heli support',
   'AFB Hoedspruit': 'Limpopo air ops & support',
   'AFB Langebaanweg': 'Pilot training (PC-7 MkII)',
+  'AFB Durban': 'Coastal support & air movement',
+  'AFS Port Elizabeth': 'Eastern Cape air support',
+  'AFB Overberg': 'TFDC: test, development & evaluation',
+};
+
+const LABEL_OFFSETS = {
+  'AFB Waterkloof': { x: 18, y: -38 },
+  'AFB Swartkop': { x: 18, y: 12 },
 };
 
 export default function BasesGoogleMap({ rows, height = 360, onSelect, fallback = null }) {
   const mapEl = useRef(null);
-  const [ready, setReady] = useState(false);
   const [error, setError] = useState(null);
   const mapRef = useRef(null);
 
@@ -114,7 +127,7 @@ export default function BasesGoogleMap({ rows, height = 360, onSelect, fallback 
           const pos = BASE_COORDS[b.name];
           if (!pos) return;
           const stats = countsByBase[b.name] || { total: 0, Ready: 0, Pending: 0, 'Not Ready': 0 };
-          const extra = BASE_SUMMARY[b.name] ? `<div style="margin-top:6px;color:#cfd8dc"><span style=\"opacity:.8\">Assets:</span> ${BASE_SUMMARY[b.name]}</div>` : '';
+          const extra = BASE_SUMMARY[b.name] ? `<div style="margin-top:6px;color:#cfd8dc"><span style="opacity:.8">Assets:</span> ${BASE_SUMMARY[b.name]}</div>` : '';
           const html = `
             <div style="min-width:220px;color:#fff">
               <div style="font-weight:700;margin-bottom:4px">${b.name}</div>
@@ -128,17 +141,20 @@ export default function BasesGoogleMap({ rows, height = 360, onSelect, fallback 
           let marker;
           if (mkLib && mkLib.AdvancedMarkerElement) {
             const el = document.createElement('div');
-            el.style.cssText = 'background:#30d158;border:2px solid #0b0f14;width:14px;height:14px;border-radius:50%;box-shadow:0 6px 18px rgba(0,0,0,0.35)';
+            el.className = 'sa-advanced-marker';
+            el.innerHTML = '<span class="sa-marker-stem"></span><span class="sa-marker-core"></span><span class="sa-marker-pulse"></span>';
             marker = new mkLib.AdvancedMarkerElement({ map, position: pos, content: el, title: b.name });
-            el.addEventListener('mouseenter', () => { el.style.background = '#00e676'; });
-            el.addEventListener('mouseleave', () => { el.style.background = '#30d158'; });
+            el.addEventListener('mouseenter', () => { el.classList.add('is-hovered'); });
+            el.addEventListener('mouseleave', () => { el.classList.remove('is-hovered'); });
             el.addEventListener('click', () => { if (onSelect) onSelect(b.name); else { info.setContent(html); info.open({ map, anchor: marker }); } });
 
             // Label chip element (AdvancedMarker)
             const chip = document.createElement('div');
             chip.className = 'map-chip';
             chip.textContent = b.name;
-            chip.style.transform = 'translate(14px, -12px)';
+            const offset = LABEL_OFFSETS[b.name] || { x: 18, y: -18 };
+            chip.style.setProperty('--chip-x', `${offset.x}px`);
+            chip.style.setProperty('--chip-y', `${offset.y}px`);
             const chipMarker = new mkLib.AdvancedMarkerElement({ map, position: pos, content: chip, title: b.name, zIndex: 2 });
             chip.addEventListener('click', () => { if (onSelect) onSelect(b.name); else { info.setContent(html); info.open({ map, anchor: chipMarker }); } });
             chips.push(chip);
@@ -155,7 +171,7 @@ export default function BasesGoogleMap({ rows, height = 360, onSelect, fallback 
           chips.forEach(ch => { ch.style.display = show ? 'inline-flex' : 'none'; });
         };
         updateChips();
-        const zm = map.addListener('zoom_changed', updateChips);
+        map.addListener('zoom_changed', updateChips);
 
         // Dark control buttons for zoom/rotate/tilt
         const controls = document.createElement('div');
@@ -197,25 +213,23 @@ export default function BasesGoogleMap({ rows, height = 360, onSelect, fallback 
         });
         map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(controls);
 
-        setReady(true);
       })
-      .catch((e) => { setError(e); setReady(false); });
+      .catch((e) => { setError(e); });
     return () => { cancelled = true; };
-  }, [apiKey, mapId, countsByBase]);
+  }, [apiKey, mapId, countsByBase, onSelect]);
 
   // Fallback wrapper with visible banner when Google Maps cannot load
   const renderFallback = (message) => (
-    <div className="google-map-container" style={{ position: 'relative', height: 360, borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', marginBottom: 12 }}>
-      <div className="map-fallback-banner">{message}</div>
+    <div className="google-map-container locations-map-shell" style={{ position: 'relative', height: 360 }}>
       <div style={{ width: '100%', height: '100%' }}>{fallback}</div>
     </div>
   );
 
-  if (error && fallback) return renderFallback('Google Maps failed to load — showing fallback map');
-  if (!apiKey && fallback) return renderFallback('Missing Google Maps API key — showing fallback map');
+  if (error && fallback) return renderFallback();
+  if (!apiKey && fallback) return renderFallback();
 
   return (
-    <div className="google-map-container" style={{ height, borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', marginBottom: 12 }}>
+    <div className="google-map-container locations-map-shell" style={{ height }}>
       <div ref={mapEl} style={{ width: '100%', height: '100%' }} />
     </div>
   );
